@@ -28,10 +28,11 @@
         <androidx.appcompat.widget.SearchView
             android:id="@+id/map_search"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            app:queryHint="Enter Food Type" />
 
-        <FrameLayout
-            android:id="@+id/frag_container"
+        <com.example.burgertracker.models.MapWrapperLayout
+            android:id="@+id/map_wrapper_layout"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
@@ -40,8 +41,8 @@
                 android:name="com.google.android.gms.maps.SupportMapFragment"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent" />
-        </FrameLayout>
 
+        </com.example.burgertracker.models.MapWrapperLayout>
     </LinearLayout>
 
     <com.google.android.material.navigation.NavigationView

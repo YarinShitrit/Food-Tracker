@@ -1,10 +1,11 @@
-package com.example.burgertracker
+package com.example.burgertracker.settings
 
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SeekBarPreference
+import com.example.burgertracker.R
 
 private const val TAG = "SettingsActivity"
 

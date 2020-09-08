@@ -25,17 +25,16 @@
             android:value="ca-app-pub-8164031763957320~7609387007" />
 
         <activity
-            android:name=".SettingsActivity"
+            android:name=".settings.SettingsActivity"
             android:label="@string/title_activity_settings"
-            android:parentActivityName=".map.MapsActivity">
+            android:parentActivityName=".map.MapActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value=".map.MapsActivity" />
+                android:value=".map.MapActivity" />
         </activity>
 
-
         <activity
-            android:name=".map.MapsActivity"
+            android:name=".map.MapActivity"
             android:label="@string/title_activity_maps">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

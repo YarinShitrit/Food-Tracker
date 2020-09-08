@@ -7,7 +7,7 @@
 
     <activity
         android:id="@+id/mapsActivity"
-        android:name="com.example.burgertracker.map.MapsActivity"
+        android:name="com.example.burgertracker.map.MapActivity"
         android:label="activity_maps"
         tools:layout="@layout/activity_maps" />
     <fragment
