@@ -4,10 +4,10 @@
     <PreferenceCategory app:title="Radius Search Range">
         <SeekBarPreference
             android:max="50"
-            app:key="range"
+            app:key="radius"
             app:min="0"
             app:showSeekBarValue="true"
-            app:summary="Choose the radius range for showing places around you in Kilometers" />
+            app:summary="Choose the radius for places around you in km" />
 
         <EditTextPreference
             app:key="signature"

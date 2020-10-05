@@ -7,10 +7,13 @@ import com.google.android.libraries.places.api.model.Place
 @Dao
 interface PlaceDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertPlace(place: PlaceEntity)
+    fun insertPlace(place: Place)
 
     @Query("SELECT * FROM placeentity")
-    fun getAllPlaces(): LiveData<List<PlaceEntity>>
+    fun getAllPlaces(): LiveData<ArrayList<Place>>
+
+    @Query("SELECT * FROM place WHERE ")
+    fun getFavoritePlaces(): LiveData<ArrayList<Place>>
 
     @Query("DELETE FROM placeentity")
     fun deletePlace(placeName: Place)

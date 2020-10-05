@@ -3,11 +3,14 @@ package com.example.burgertracker.settings
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.ViewModelProvider
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SeekBarPreference
 import com.example.burgertracker.R
+import com.example.burgertracker.map.MapViewModel
 
 private const val TAG = "SettingsActivity"
+private lateinit var mapViewModel: MapViewModel
 
 class SettingsActivity : AppCompatActivity() {
 
@@ -25,19 +28,17 @@ class SettingsActivity : AppCompatActivity() {
     class SettingsFragment : PreferenceFragmentCompat() {
         override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
             setPreferencesFromResource(R.xml.root_preferences, rootKey)
+            mapViewModel = ViewModelProvider(this).get(MapViewModel::class.java)
             preferenceManager.sharedPreferencesName = "prefs"
-            Log.d(TAG, preferenceManager.sharedPreferencesName)
-            preferenceScreen.findPreference<SeekBarPreference>("range")?.value =
-                preferenceManager.sharedPreferences.getInt("range", 25)
-            preferenceScreen.findPreference<SeekBarPreference>("range")
-                ?.setOnPreferenceChangeListener { preference, newValue ->
-                    Log.d(TAG, "seekBar value changed new values is $newValue")
-                    preferenceManager.sharedPreferences.edit().putInt("range", newValue as Int)
-                        .apply()
-                    (preference as SeekBarPreference).setDefaultValue(newValue)
-                    return@setOnPreferenceChangeListener true
-                }
-
+            val seekBarRadius = preferenceScreen.findPreference<SeekBarPreference>("radius")
+            seekBarRadius?.value= mapViewModel.searchRadius.value!!
+            seekBarRadius?.setOnPreferenceChangeListener { _, newValue ->
+                Log.d(TAG, "seekBar value changed, new value is $newValue")
+                preferenceManager.sharedPreferences.edit().putInt("radius", newValue as Int)
+                    .apply()
+                mapViewModel.searchRadius.value = newValue
+                return@setOnPreferenceChangeListener true
+            }
         }
     }
 }

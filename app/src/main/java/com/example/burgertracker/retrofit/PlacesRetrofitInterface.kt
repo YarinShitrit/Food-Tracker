@@ -1,36 +1,56 @@
 package com.example.burgertracker.retrofit
 
-import com.example.burgertracker.data.Result
+import com.example.burgertracker.data.PlaceResult
 import retrofit2.Call
+import retrofit2.Response
 import retrofit2.http.GET
-
 import retrofit2.http.Query
 
 
 interface PlacesRetrofitInterface {
 
+    /**
+     * Call Places API and get nearby places in JSON format
+     * @param query String - The query search
+     * @param types String - The type of places to search e.g restaurant, airport, etc..
+     * @param location String - the [LatLng] of the location displayed like the following - latitude , longitude
+     * @param radius Int - The radius for searching places in meters
+     * @param key String - The Places API key
+     */
     @GET("/maps/api/place/textsearch/json?")
-    fun getNearbyPlaces(
+    suspend fun getNearbyPlaces(
         @Query("query") query: String,
-        @Query("types") types: String,
+        @Query("type") types: String,
         @Query("location") location: String,
         @Query("radius") radius: Int,
         @Query("key") key: String
-    ): Call<Result>
+    ): Response<PlaceResult>
 
+    /**
+     * Call Places API and get nearby places in JSON format without query
+     * @param types String - The type of places to search e.g restaurant, airport, etc..
+     * @param location String - the [LatLng] of the location displayed like the following - latitude , longitude
+     * @param radius Int - The radius for searching places in meters
+     * @param key String - The Places API key
+     */
     @GET("/maps/api/place/textsearch/json?")
-    fun getNearbyPlaces(
-        @Query("types") types: String,
+    suspend fun getNearbyPlaces(
+        @Query("type") types: String,
         @Query("location") location: String,
         @Query("radius") radius: Int,
         @Query("key") key: String
-    ): Call<Result>
+    ): Response<PlaceResult>
 
+    /**
+     * Call Places API and get nearby places in JSON format from next page token
+     * @param next_page_token String - The token received from previous API call that indicates the next page of places available
+     * @param key String - The Places API key
+     */
     @GET("/maps/api/place/textsearch/json?")
-    fun getNearbyPlaces(
+    suspend fun getNearbyPlaces(
         @Query("pagetoken") next_page_token: String,
         @Query("key") key: String
-    ): Call<Result>
+    ): Response<PlaceResult>
 
 
 }

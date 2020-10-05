@@ -19,6 +19,7 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.Marker
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.main_map_activity.*
 import java.lang.Exception
@@ -29,7 +30,7 @@ private const val TAG = "AppUtils"
 class AppUtils : Application() {
 
     /**
-     * Shows a SnackBar on [MapActivity] that redirects to app settings in order to enable location permission
+     * Shows a SnackBar on [MapActivity] that redirects to app settings in order to enable requested permissions
      * @param activity The [MapActivity] associated with the application
      */
     fun showPermissionsSnackBar(activity: MapActivity) {
@@ -80,49 +81,6 @@ class AppUtils : Application() {
                 }
             } catch (e: Exception) {
                 Log.d(TAG, "Could not receive current location -> ${e.localizedMessage}")
-            }
-        }
-    }
-
-    fun setPlaceMarkerIcon(placesList: ArrayList<Place>, query: String?) {
-        placesList.forEach {
-            var place = it
-            if (place.markerIcon == null && !query.isNullOrEmpty()) {
-
-                when (query) {
-                    "pizza" -> place.markerIcon =
-                        BitmapDescriptorFactory.fromResource(R.drawable.pizza)
-                    "burger" -> place.markerIcon =
-                        BitmapDescriptorFactory.fromResource(R.drawable.hamburger)
-
-                }
-                if (place.name.contains("pizza".trim(), true) || place.name.contains(
-                        "pizzeria".trim(),
-                        true
-                    ) || place.name.contains("פיצה".trim(), true)
-                ) {
-                    place.markerIcon = BitmapDescriptorFactory.fromResource(R.drawable.pizza)
-                } else if (place.name.contains("burger".trim(), true) || place.name.contains(
-                        "בורגר".trim(),
-                        true
-                    )
-                ) {
-                    place.markerIcon = BitmapDescriptorFactory.fromResource(R.drawable.hamburger)
-                } else if (place.name.contains("sushi", true) || place.name.contains(
-                        "סושי",
-                        true
-                    )
-                ) {
-                    place.markerIcon = BitmapDescriptorFactory.fromResource(R.drawable.sushi)
-                } else if (place.name.contains("cafe".trim(), true) || place.name.contains(
-                        "קפה".trim(),
-                        true
-                    )
-                ) {
-                    place.markerIcon = BitmapDescriptorFactory.fromResource(R.drawable.cafe)
-                } else if (place.name.contains("taco".trim(), true)) {
-                    place.markerIcon = BitmapDescriptorFactory.fromResource(R.drawable.taco)
-                }
             }
         }
     }

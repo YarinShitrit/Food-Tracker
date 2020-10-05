@@ -1,4 +1,4 @@
-package com.example.burgertracker.data
+package com.example.burgertracker
 
 import android.app.NotificationManager
 import android.content.BroadcastReceiver

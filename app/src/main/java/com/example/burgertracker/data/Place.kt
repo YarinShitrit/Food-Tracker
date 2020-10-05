@@ -6,7 +6,6 @@ import android.util.Log
 import com.example.burgertracker.R
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
-import com.google.gson.annotations.Expose
 
 
 /**
@@ -14,50 +13,53 @@ import com.google.gson.annotations.Expose
  * @param next_page_token The token indicting a next page of places (if available)
  * @param status The status code of the Places API call
  */
-data class Result(
+data class PlaceResult(
 
-    @Expose
     var results: ArrayList<Place>,
-    @Expose
+
     var next_page_token: String,
-    @Expose
+
     var status: String
 )
 
 data class GeometryResult(
 
-    @Expose
     var location: PlaceLocation
 )
 
 data class PlaceLocation(
 
-    @Expose
     var lat: Double,
-    @Expose
+
     var lng: Double
+)
+
+data class OpeningHours(
+    var open_now: Boolean
 )
 
 private const val TAG = "Place"
 
 data class Place(
-    @Expose
+
     var place_id: String,
-    @Expose
+
     var name: String,
-    @Expose
+
     var geometry: GeometryResult,
-    @Expose
+
     var formatted_address: String,
-    @Expose
+
     var rating: Double,
-    @Expose
+
+    var opening_hours: OpeningHours,
+
     var formatted_phone_number: String?,
     var imageString: String?
 ) {
-    var photo_reference: Bitmap? = null
+    var distance: Float? = null
     var markerIcon: BitmapDescriptor? = null
-
+    var isLiked: Boolean = false
     fun setIcon(): BitmapDescriptor? {
         if (markerIcon == null) {
             if (name.contains("pizza".trim(), true) || name.contains(
