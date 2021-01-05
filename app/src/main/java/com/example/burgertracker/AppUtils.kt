@@ -1,7 +1,6 @@
 package com.example.burgertracker
 
 import android.Manifest
-import android.app.Activity
 import android.app.Application
 import android.content.Context
 import android.content.Intent
@@ -12,17 +11,12 @@ import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.ViewModelProvider
-import com.example.burgertracker.data.Place
 import com.example.burgertracker.map.MapActivity
 import com.example.burgertracker.map.MapViewModel
 import com.google.android.gms.location.LocationServices
-import com.google.android.gms.maps.model.BitmapDescriptor
-import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.Marker
 import com.google.android.material.snackbar.Snackbar
-import kotlinx.android.synthetic.main.main_map_activity.*
-import java.lang.Exception
+import kotlinx.android.synthetic.main.map_activity.*
 
 
 private const val TAG = "AppUtils"

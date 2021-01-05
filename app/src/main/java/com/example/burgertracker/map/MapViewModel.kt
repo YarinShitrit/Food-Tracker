@@ -3,17 +3,22 @@ package com.example.burgertracker.map
 
 import android.app.Application
 import android.content.Context
+import android.graphics.Bitmap
 import android.location.Location
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.viewModelScope
 import com.example.burgertracker.AppRepository
 import com.example.burgertracker.R
 import com.example.burgertracker.data.Place
+import com.example.burgertracker.models.User
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
-import kotlin.collections.ArrayList
+import com.squareup.picasso.Picasso
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 
 private const val TAG = "MapViewModel"
@@ -21,6 +26,8 @@ private const val TAG = "MapViewModel"
 class MapViewModel(application: Application) : AndroidViewModel(application) {
     private val appKey = application.resources.getString(R.string.google_maps_key)
     private val appRepository = AppRepository()
+    val currentUser = MutableLiveData<User>()
+    val currentUserPhoto = MutableLiveData<Bitmap>()
     val placesList = MutableLiveData<ArrayList<Place>>()
     val mediator = MediatorLiveData<ArrayList<Place>>()
     val queryIcon = MutableLiveData<String>()
@@ -37,14 +44,12 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
             it.addAll(placesList.value!!)
             placesList.value = it
             Log.d(TAG, "placesList size is ${placesList.value!!.size}")
-            //addPlaces(it)
         }
     }
 
     /**
-     *Shoots a Retrofit call to Google Places API to retrieve JSON data about nearby places
+     *Creates a Retrofit call to Google Places API to retrieve JSON data about nearby places
      *@param query String?- the query entered for specific type of nearby places or null for getting all types nearby places
-     *@param nextPageToken String?- The token indicating the next page available form the API call for more places to retrieve
      */
     suspend fun getNearbyPlaces(query: String?) {
         Log.d(TAG, "getNearbyPlaces called")
@@ -126,6 +131,18 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
             stringDistance =
                 stringDistance.substring(0, stringDistance.indexOf(".") + 2)
             it.distance = stringDistance.toFloat()
+        }
+    }
+
+    fun downloadCurrentUserPhoto() {
+        Log.d(
+            TAG,
+            "downloadCurrentUserPhoto called -> downloading photo from ${currentUser.value?.photoURL.toString()}"
+        )
+        viewModelScope.launch(Dispatchers.IO) {
+            currentUserPhoto.postValue(
+                Picasso.get().load(currentUser.value?.photoURL).resize(200, 200).get()
+            )
         }
     }
 }

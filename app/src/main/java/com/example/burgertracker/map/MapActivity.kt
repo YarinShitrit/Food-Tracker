@@ -16,26 +16,29 @@ import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.view.Window
-import android.widget.ImageButton
-import android.widget.Toast
+import android.widget.*
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
+import androidx.core.net.toUri
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.burgertracker.AppReceiver
 import com.example.burgertracker.AppUtils
 import com.example.burgertracker.R
-import com.example.burgertracker.AppReceiver
 import com.example.burgertracker.data.Place
+import com.example.burgertracker.databinding.MapActivityBinding
+import com.example.burgertracker.databinding.NavHeaderBinding
 import com.example.burgertracker.models.MapWrapperLayout
 import com.example.burgertracker.models.OnInfoWindowElemTouchListener
+import com.example.burgertracker.models.User
 import com.example.burgertracker.settings.SettingsActivity
 import com.example.burgertracker.toLatLng
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -47,7 +50,9 @@ import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.material.navigation.NavigationView
 import kotlinx.android.synthetic.main.info_window.view.*
-import kotlinx.android.synthetic.main.main_map_activity.*
+import kotlinx.android.synthetic.main.map_activity.*
+import kotlinx.android.synthetic.main.nav_header.*
+import kotlinx.android.synthetic.main.nav_header.view.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -58,7 +63,6 @@ private const val PERMISSION_ID = 10
 
 class MapActivity : AppCompatActivity(), OnMapReadyCallback,
     NavigationView.OnNavigationItemSelectedListener {
-    private val appUtils = AppUtils()
     private val normalZoom = 17.0F
     private var isMapAvailable = false // becomes true when onMapReady() is called
     private val permissionsNeeded = arrayOf(
@@ -72,6 +76,8 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback,
     private lateinit var notificationHandler: NotificationCompat.Builder
     private lateinit var drawer: DrawerLayout
     private lateinit var infoWindow: PlaceInfoWindow
+    private lateinit var binding: MapActivityBinding
+    private lateinit var navHeaderBinding: NavHeaderBinding
 
     @RequiresApi(Build.VERSION_CODES.M)
     private fun checkPermissions() = permissionsNeeded.all {
@@ -104,10 +110,14 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback,
         super.onCreate(savedInstanceState)
         mapViewModel = ViewModelProvider(this).get(MapViewModel::class.java)
         requestWindowFeature(Window.FEATURE_NO_TITLE)
-        setContentView(R.layout.main_map_activity)
+        binding = MapActivityBinding.inflate(layoutInflater)
+        navHeaderBinding = NavHeaderBinding.inflate(layoutInflater)
+        val view = binding.root
+        setContentView(view)
         setSupportActionBar(toolbar)
-        initDrawerAndNavigation(savedInstanceState)
         initFoodTypeRecyclerView()
+        initDrawerAndNavigation(savedInstanceState)
+        getCurrentUserData()
     }
 
     override fun onStart() {
@@ -185,7 +195,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback,
     private fun initObservers() {
         Log.d(TAG, "initObservers called")
         mapViewModel.userLocation.observe(this, Observer {
-            Log.d(TAG, "userLocation changed -> $it")
+            Log.d(TAG, "userLocation observer triggered -> $it")
             //initMap()
             appMap.animateCamera(
                 CameraUpdateFactory.newLatLngZoom(
@@ -202,22 +212,35 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback,
             }
 
             if (mapViewModel.placesList.value.isNullOrEmpty()) {
-                Log.d(TAG, "calling getNearbyPlaces from placesList observer")
+                Log.d(TAG, "calling getNearbyPlaces() from placesList observer")
                 CoroutineScope(Dispatchers.IO).launch {
                     mapViewModel.getNearbyPlaces(null)
                 }
             }
         })
         mapViewModel.mediator.observe(this, Observer {
-            Log.d(TAG, "Mediator changed calling displayPlaces")
+            Log.d(TAG, "Mediator observer triggered -> calling displayPlaces()")
             mapViewModel.setPlacesDistance(it)
             mapViewModel.setPlacesMarkerIcon(it)
             displayPlaces(it)
         })
         mapViewModel.placesList.observe(this, Observer {
             if (!it.isNullOrEmpty()) {
-                Log.d(TAG, "placesList changed -> calling displayPlaces()")
+                Log.d(TAG, "placesList observer triggered -> calling displayPlaces()")
             }
+        })
+
+        mapViewModel.currentUser.observe(this, Observer {
+            Log.d(TAG, "currentUser observer triggered -> displaying user ${it.name}")
+            mapViewModel.downloadCurrentUserPhoto()
+            navView.getHeaderView(0).findViewById<TextView>(R.id.userName).text =
+                mapViewModel.currentUser.value?.name
+            navView.getHeaderView(0).findViewById<TextView>(R.id.userEmail).text =
+                mapViewModel.currentUser.value?.email
+        })
+        mapViewModel.currentUserPhoto.observe(this, Observer {
+            Log.d(TAG, "currentUserPhoto observer triggered -> displaying photo $it")
+            navView.getHeaderView(0).findViewById<ImageView>(R.id.userPhoto).setImageBitmap(it)
         })
     }
 
@@ -345,6 +368,18 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback,
             mapFragment.getMapAsync(this)
 
         }
+    }
+
+    private fun getCurrentUserData() {
+        Log.d(TAG, "getCurrentUserFromLoginActivity called")
+        val userBundle = intent.getBundleExtra("user")
+        mapViewModel.currentUser.value = User(
+            userBundle?.getString("name"),
+            userBundle?.getString("email"),
+            userBundle?.getString("photoUrl")?.toUri()
+        )
+        Log.d(TAG, "Current user is ${mapViewModel.currentUser.value.toString()}")
+
     }
 
     /**

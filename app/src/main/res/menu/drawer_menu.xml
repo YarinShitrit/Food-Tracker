@@ -15,10 +15,6 @@
             android:icon="@drawable/ic_favorite_black_24dp"
             android:title="Favorites" />
         <item
-            android:id="@+id/item3"
-            android:icon="@drawable/ic_store_black_24dp"
-            android:title="Favorites3" />
-        <item
             android:id="@+id/settingsItem"
             android:icon="@drawable/ic_settings_black_24dp"
             android:title="Settings">
