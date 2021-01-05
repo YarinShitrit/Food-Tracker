@@ -23,7 +23,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
-import androidx.core.net.toUri
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.Observer
@@ -36,11 +35,12 @@ import com.example.burgertracker.R
 import com.example.burgertracker.data.Place
 import com.example.burgertracker.databinding.MapActivityBinding
 import com.example.burgertracker.databinding.NavHeaderBinding
+import com.example.burgertracker.login.LoginActivity
 import com.example.burgertracker.models.MapWrapperLayout
 import com.example.burgertracker.models.OnInfoWindowElemTouchListener
-import com.example.burgertracker.models.User
 import com.example.burgertracker.settings.SettingsActivity
 import com.example.burgertracker.toLatLng
+import com.firebase.ui.auth.AuthUI
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -49,8 +49,11 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.material.navigation.NavigationView
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
 import kotlinx.android.synthetic.main.info_window.view.*
 import kotlinx.android.synthetic.main.map_activity.*
+import kotlinx.android.synthetic.main.map_activity.view.*
 import kotlinx.android.synthetic.main.nav_header.*
 import kotlinx.android.synthetic.main.nav_header.view.*
 import kotlinx.coroutines.CoroutineScope
@@ -117,7 +120,6 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback,
         setSupportActionBar(toolbar)
         initFoodTypeRecyclerView()
         initDrawerAndNavigation(savedInstanceState)
-        getCurrentUserData()
     }
 
     override fun onStart() {
@@ -129,6 +131,16 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback,
     override fun onResume() {
         Log.d(TAG, "onResume called")
         super.onResume()
+        FirebaseAuth.getInstance().currentUser.also {
+            FirebaseAuth.getInstance().currentUser?.let { user ->
+                mapViewModel.downloadCurrentUserPhoto(
+                    user
+                )
+            }
+            if (it != null) {
+                displayCurrentUserData(it)
+            }
+        }
         /**checks if permissions were granted and onMapReady() was called already so the activity was just paused/stopped
          * so just display map again because onMapReady() is called only once
          */
@@ -138,6 +150,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback,
             if (!mapViewModel.placesList.value.isNullOrEmpty()) {
                 displayPlaces(mapViewModel.placesList.value!!)
             }
+
         }
         /**checks if
          * no permissions were granted even after requestPermissions() was called from onMapReady() so the user
@@ -228,15 +241,6 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback,
             if (!it.isNullOrEmpty()) {
                 Log.d(TAG, "placesList observer triggered -> calling displayPlaces()")
             }
-        })
-
-        mapViewModel.currentUser.observe(this, Observer {
-            Log.d(TAG, "currentUser observer triggered -> displaying user ${it.name}")
-            mapViewModel.downloadCurrentUserPhoto()
-            navView.getHeaderView(0).findViewById<TextView>(R.id.userName).text =
-                mapViewModel.currentUser.value?.name
-            navView.getHeaderView(0).findViewById<TextView>(R.id.userEmail).text =
-                mapViewModel.currentUser.value?.email
         })
         mapViewModel.currentUserPhoto.observe(this, Observer {
             Log.d(TAG, "currentUserPhoto observer triggered -> displaying photo $it")
@@ -336,7 +340,15 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback,
      * @param savedInstanceState [Bundle] - the saved state from [onCreate]. Required to obtain [SupportMapFragment]
      */
     private fun initDrawerAndNavigation(savedInstanceState: Bundle?) {
-        drawer = findViewById(R.id.main_layout)
+        binding.logout.setOnClickListener {
+            AuthUI.getInstance()
+                .signOut(this)
+                .addOnCompleteListener {
+                    startActivity(Intent(this, LoginActivity::class.java))
+                    finishAfterTransition()
+                }
+        }
+        drawer = binding.mainLayout
         val toggle = ActionBarDrawerToggle(
             this,
             drawer,
@@ -360,6 +372,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback,
             }
             return@setNavigationItemSelectedListener true
         }
+        binding.logout
         toggle.syncState()
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         if (savedInstanceState == null || navView.checkedItem?.itemId == R.id.mapItem) {
@@ -370,16 +383,11 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback,
         }
     }
 
-    private fun getCurrentUserData() {
-        Log.d(TAG, "getCurrentUserFromLoginActivity called")
-        val userBundle = intent.getBundleExtra("user")
-        mapViewModel.currentUser.value = User(
-            userBundle?.getString("name"),
-            userBundle?.getString("email"),
-            userBundle?.getString("photoUrl")?.toUri()
-        )
-        Log.d(TAG, "Current user is ${mapViewModel.currentUser.value.toString()}")
-
+    private fun displayCurrentUserData(user: FirebaseUser) {
+        navView.getHeaderView(0).findViewById<TextView>(R.id.userName).text =
+            user.displayName
+        navView.getHeaderView(0).findViewById<TextView>(R.id.userEmail).text =
+            user.email
     }
 
     /**

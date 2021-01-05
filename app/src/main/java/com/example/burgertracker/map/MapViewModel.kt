@@ -13,9 +13,9 @@ import androidx.lifecycle.viewModelScope
 import com.example.burgertracker.AppRepository
 import com.example.burgertracker.R
 import com.example.burgertracker.data.Place
-import com.example.burgertracker.models.User
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
+import com.google.firebase.auth.FirebaseUser
 import com.squareup.picasso.Picasso
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -26,7 +26,6 @@ private const val TAG = "MapViewModel"
 class MapViewModel(application: Application) : AndroidViewModel(application) {
     private val appKey = application.resources.getString(R.string.google_maps_key)
     private val appRepository = AppRepository()
-    val currentUser = MutableLiveData<User>()
     val currentUserPhoto = MutableLiveData<Bitmap>()
     val placesList = MutableLiveData<ArrayList<Place>>()
     val mediator = MediatorLiveData<ArrayList<Place>>()
@@ -134,14 +133,14 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun downloadCurrentUserPhoto() {
+    fun downloadCurrentUserPhoto(user: FirebaseUser) {
         Log.d(
             TAG,
-            "downloadCurrentUserPhoto called -> downloading photo from ${currentUser.value?.photoURL.toString()}"
+            "downloadCurrentUserPhoto called -> downloading photo from ${user.photoUrl.toString()}"
         )
         viewModelScope.launch(Dispatchers.IO) {
             currentUserPhoto.postValue(
-                Picasso.get().load(currentUser.value?.photoURL).resize(200, 200).get()
+                Picasso.get().load(user.photoUrl).resize(200, 200).get()
             )
         }
     }
