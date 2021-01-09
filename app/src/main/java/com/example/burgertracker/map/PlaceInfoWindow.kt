@@ -25,7 +25,7 @@ class PlaceInfoWindow(
         mWindow.distance_text_view.text = "${place.distance}km"
     }
 
-    override fun getInfoContents(marker: Marker): View? {
+    override fun getInfoContents(marker: Marker): View {
         mapWrapperLayout.setMarkerWithInfoWindow(marker, mWindow)
         callButtonListener.setMarker(marker)
         return mWindow

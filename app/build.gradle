@@ -2,19 +2,19 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 apply plugin: 'com.google.gms.google-services'
+apply plugin: 'com.google.firebase.crashlytics'
 
 android {
-    compileSdkVersion 29
+    compileSdkVersion 30
     buildToolsVersion "29.0.3"
 
     defaultConfig {
         applicationId "com.example.burgertracker"
         minSdkVersion 21
-        targetSdkVersion 29
+        targetSdkVersion 30
         versionCode 1
         versionName "1.0"
         multiDexEnabled true
-
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -43,7 +43,7 @@ android {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
-    //core kotlin+androidx
+    //Core Kotlin + AndroidX
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation "com.google.android.material:material:1.3.0-beta01"
     implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
@@ -53,7 +53,10 @@ dependencies {
     implementation 'androidx.preference:preference-ktx:1.1.1'
     implementation 'androidx.multidex:multidex:2.0.1'
 
-    //Google Maps + places API
+    //Material Design
+    'com.google.android.material:material:1.0.0'
+
+    //Google Maps + Places API
     implementation 'com.google.android.gms:play-services-maps:17.0.0'
     implementation name: 'maps-sdk-3.0.0-beta', ext: 'aar'
     implementation name: 'places-maps-sdk-3.0.0-beta', ext: 'aar'
@@ -66,8 +69,16 @@ dependencies {
     //Firebase
     implementation platform('com.google.firebase:firebase-bom:26.2.0')
     implementation 'com.google.firebase:firebase-analytics-ktx'
+
+    //Crashlytics
+    implementation 'com.google.firebase:firebase-crashlytics-ktx'
+
     //Firebase Authentication
     implementation 'com.firebaseui:firebase-ui-auth:6.4.0'
+    implementation 'androidx.preference:preference-ktx:1.1.1'
+
+    //Facebook Login
+    implementation 'com.facebook.android:facebook-android-sdk:5.15.3'
 
 
     //Testing + Espresso
@@ -85,7 +96,7 @@ dependencies {
     implementation 'androidx.room:room-runtime:2.2.6'
     annotationProcessor 'androidx.room:room-compiler:2.2.6'
 
-    // JSON Converter
+    // JSON Converter - GSON
     implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
 
     // Retrofit

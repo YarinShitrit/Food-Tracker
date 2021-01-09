@@ -1,6 +1,5 @@
 package com.example.burgertracker.map
 
-
 import android.app.Application
 import android.content.Context
 import android.graphics.Bitmap
@@ -13,6 +12,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.burgertracker.AppRepository
 import com.example.burgertracker.R
 import com.example.burgertracker.data.Place
+import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.auth.FirebaseUser
@@ -26,12 +26,15 @@ private const val TAG = "MapViewModel"
 class MapViewModel(application: Application) : AndroidViewModel(application) {
     private val appKey = application.resources.getString(R.string.google_maps_key)
     private val appRepository = AppRepository()
+    var isMapAvailable = false // becomes true when onMapReady() is called
+    val appMap = MutableLiveData<GoogleMap>()
+    val currentUser = MutableLiveData<FirebaseUser>()
     val currentUserPhoto = MutableLiveData<Bitmap>()
     val placesList = MutableLiveData<ArrayList<Place>>()
     val mediator = MediatorLiveData<ArrayList<Place>>()
     val queryIcon = MutableLiveData<String>()
     val userLocation = MutableLiveData<LatLng>()
-    val searchRadius = MutableLiveData<Int>(
+    val searchRadius = MutableLiveData(
         application.getSharedPreferences("prefs", Context.MODE_PRIVATE).getInt("radius", 15)
     )
 

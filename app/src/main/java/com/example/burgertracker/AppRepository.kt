@@ -6,9 +6,7 @@ import com.example.burgertracker.data.Place
 import com.example.burgertracker.data.PlaceResult
 import com.example.burgertracker.retrofit.PlacesRetrofitInterface
 import com.google.android.gms.maps.model.LatLng
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.withContext
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -18,6 +16,7 @@ private const val TAG = "AppRepository"
 
 class AppRepository {
     val placesList = MutableLiveData<ArrayList<Place>>()
+
     suspend fun getNearbyPlaces(
         query: String?,
         type: String,
