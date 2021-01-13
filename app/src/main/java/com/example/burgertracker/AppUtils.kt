@@ -5,7 +5,9 @@ import android.app.Application
 import android.content.Context
 import android.content.pm.PackageManager
 import android.location.Location
+import android.location.LocationManager
 import android.util.Log
+import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.ViewModelProvider
@@ -36,17 +38,36 @@ class AppUtils : Application() {
             ) == PackageManager.PERMISSION_GRANTED)
         ) {
             try {
-                val currentLocationTask =
-                    LocationServices.getFusedLocationProviderClient(activity).lastLocation
-                currentLocationTask.addOnSuccessListener(activity) {
-                    Log.d(TAG, "CurrentLocationTask Processing")
-                    if (currentLocationTask.isSuccessful) {
+                //Try to get location from LocationManager
+                val nManager = activity.getSystemService(LOCATION_SERVICE) as LocationManager
+                if (nManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                    val locationGPS: Location? =
+                        nManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+                    if (locationGPS != null) {
                         Log.d(
                             TAG,
-                            "CurrentLocationTask Completed Successfully, Current location is $it"
+                            "Received location from LocationManager -> Current location is ${locationGPS.toLatLng()}"
                         )
-                        viewModel.userLocation.value = it.toLatLng()
+                        viewModel.userLocation.value = locationGPS.toLatLng()
+                    } else {
+                        //Try to get location from LocationServices
+                        val currentLocationTask =
+                            LocationServices.getFusedLocationProviderClient(activity).lastLocation
+                        currentLocationTask.addOnSuccessListener(activity) {
+                            if (currentLocationTask.isSuccessful) {
+                                Log.d(
+                                    TAG,
+                                    "Received Location from LocationServices -> Current location is ${it.toLatLng()}"
+                                )
+                                if (it != null) {
+                                    viewModel.userLocation.value = it.toLatLng()
+                                }
+                            }
+                        }
                     }
+                } else {
+                    Log.d(TAG, "GPS not available")
+                    Toast.makeText(activity, "Turn on GPS", Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
                 Log.d(TAG, "Could not receive current location -> ${e.localizedMessage}")
@@ -61,7 +82,9 @@ class AppUtils : Application() {
 
 }
 
+
 /**
  * @return a [LatLng] object from the [Location] object
  */
 fun Location.toLatLng() = LatLng(this.latitude, this.longitude)
+

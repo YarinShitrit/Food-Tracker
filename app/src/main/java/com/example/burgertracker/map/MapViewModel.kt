@@ -5,6 +5,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.location.Location
 import android.util.Log
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
@@ -28,8 +29,9 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     private val appRepository = AppRepository()
     var isMapAvailable = false // becomes true when onMapReady() is called
     val appMap = MutableLiveData<GoogleMap>()
-    val currentUser = MutableLiveData<FirebaseUser>()
+    val currentUser = MutableLiveData<FirebaseUser?>()
     val currentUserPhoto = MutableLiveData<Bitmap>()
+    val currentFragment = MutableLiveData<Fragment>()
     val placesList = MutableLiveData<ArrayList<Place>>()
     val mediator = MediatorLiveData<ArrayList<Place>>()
     val queryIcon = MutableLiveData<String>()

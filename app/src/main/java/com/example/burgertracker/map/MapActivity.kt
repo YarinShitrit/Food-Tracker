@@ -1,9 +1,7 @@
 package com.example.burgertracker.map
 
-
 import android.os.Bundle
 import android.util.Log
-import android.view.MenuItem
 import android.view.Window
 import android.widget.*
 import androidx.appcompat.app.ActionBarDrawerToggle
@@ -14,74 +12,60 @@ import androidx.navigation.findNavController
 import com.example.burgertracker.R
 import com.example.burgertracker.databinding.MapActivityBinding
 import com.example.burgertracker.databinding.NavHeaderBinding
+import com.example.burgertracker.login.LoginFragment
 import com.firebase.ui.auth.AuthUI
-import com.google.android.material.navigation.NavigationView
-import kotlinx.android.synthetic.main.info_window.view.*
-import kotlinx.android.synthetic.main.map_activity.*
-import kotlinx.android.synthetic.main.map_activity.view.*
-import kotlinx.android.synthetic.main.nav_header.*
-import kotlinx.android.synthetic.main.nav_header.view.*
 
 private const val TAG = "MapActivity"
 
-class MapActivity : AppCompatActivity(),
-    NavigationView.OnNavigationItemSelectedListener {
-    private lateinit var mapViewModel: MapViewModel
+
+class MapActivity : AppCompatActivity() {
     lateinit var binding: MapActivityBinding
     private lateinit var navHeaderBinding: NavHeaderBinding
+    private lateinit var mapViewModel: MapViewModel
+    private val MapActivityBinding.toggle: ActionBarDrawerToggle by lazy { setToggle() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        Log.d(TAG, "onCreate called")
+        Log.d(TAG, "onCreate() called, ${this.hashCode()}")
         super.onCreate(savedInstanceState)
         mapViewModel = ViewModelProvider(this).get(MapViewModel::class.java)
         requestWindowFeature(Window.FEATURE_NO_TITLE)
         binding = MapActivityBinding.inflate(layoutInflater)
         navHeaderBinding = NavHeaderBinding.inflate(layoutInflater)
-        val view = binding.root
-        setContentView(view)
-        setSupportActionBar(toolbar)
+        setContentView(binding.root)
+        setSupportActionBar(binding.toolbar).also {
+            title = null
+        }
         initDrawerAndNavigation()
     }
 
     override fun onStart() {
-        Log.d(TAG, "onStart called")
+        Log.d(TAG, "onStart() called")
         super.onStart()
     }
 
     override fun onResume() {
-        Log.d(TAG, "onResume called")
+        Log.d(TAG, "onResume() called")
         super.onResume()
     }
 
     override fun onPause() {
-        Log.d(TAG, "onPause called")
+        Log.d(TAG, "onPause() called")
         super.onPause()
     }
 
     override fun onStop() {
-        Log.d(TAG, "onStop called")
+        Log.d(TAG, "onStop() called")
         super.onStop()
     }
 
-    override fun onDestroy() {
-        Log.d(TAG, "onDestroy called")
-        super.onDestroy()
+    override fun onPostCreate(savedInstanceState: Bundle?) {
+        Log.d(TAG, "onPostCreate() called")
+        super.onPostCreate(savedInstanceState)
     }
 
-    override fun onNavigationItemSelected(item: MenuItem): Boolean {
-        when (item.itemId) {
-
-            R.id.mapItem -> {
-                Log.d(TAG, " map clicked")
-                findNavController(R.id.nav_controller_view_tag).navigate(R.id.action_to_mapFragment)
-            }
-            R.id.settingsItem -> {
-                Log.d(TAG, " settings clicked")
-                findNavController(R.id.nav_controller_view_tag).navigate(R.id.action_mapFragment_to_settingsFragment)
-                return true
-            }
-        }
-        return true
+    override fun onDestroy() {
+        Log.d(TAG, "onDestroy() called")
+        super.onDestroy()
     }
 
     /**
@@ -96,12 +80,14 @@ class MapActivity : AppCompatActivity(),
     }
 
     /**
-     * Initializes [binding.drawer_layout] and side navigation
+     * Initializes the DrawerLayout and side navigation
      */
     private fun initDrawerAndNavigation() {
         binding.logout.setOnClickListener {
             mapViewModel.appMap.value?.clear()
             mapViewModel.placesList.value?.clear()
+            mapViewModel.currentUser.value = null
+            mapViewModel.currentUserPhoto.value = null
             AuthUI.getInstance()
                 .signOut(this)
                 .addOnCompleteListener {
@@ -109,16 +95,7 @@ class MapActivity : AppCompatActivity(),
                 }
             binding.drawerLayout.close()
         }
-
-        val toggle = ActionBarDrawerToggle(
-            this,
-            binding.drawerLayout,
-            toolbar,
-            R.string.drawer_open,
-            R.string.drawer_close
-        )
-        binding.drawerLayout.addDrawerListener(toggle)
-        navView.setNavigationItemSelectedListener {
+        binding.navView.setNavigationItemSelectedListener {
             when (it.itemId) {
                 R.id.mapItem -> {
                     Log.d(TAG, "map item clicked")
@@ -133,15 +110,32 @@ class MapActivity : AppCompatActivity(),
             }
             return@setNavigationItemSelectedListener true
         }
+        mapViewModel.currentFragment.observe(this, {
+            when (it) {
+                is LoginFragment -> {
+                    binding.toggle.isDrawerIndicatorEnabled =
+                        false // disables the DrawerMenuButton when LoginFragment is visible
+                }
+                else -> {
+                    binding.toggle.isDrawerIndicatorEnabled = true
+                }
+            }
+        })
+    }
+
+    private fun setToggle(): ActionBarDrawerToggle {
+        val toggle = ActionBarDrawerToggle(
+            this,
+            binding.drawerLayout,
+            binding.toolbar,
+            R.string.drawer_open,
+            R.string.drawer_close
+        )
         toggle.syncState()
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        /* if (savedInstanceState == null || navView.checkedItem?.itemId == R.id.mapItem) {
-             val mapFragment = supportFragmentManager
-                 .findFragmentById(R.id.map_fragment) as SupportMapFragment
-             mapFragment.getMapAsync(this)
-         }*/
+        return toggle
     }
 }
+
 
 
 

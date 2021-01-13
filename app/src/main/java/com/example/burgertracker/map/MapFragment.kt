@@ -19,7 +19,6 @@ import androidx.appcompat.widget.SearchView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat.checkSelfPermission
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -27,6 +26,7 @@ import com.example.burgertracker.AppUtils
 import com.example.burgertracker.R
 import com.example.burgertracker.data.Place
 import com.example.burgertracker.databinding.FragmentMapBinding
+import com.example.burgertracker.databinding.InfoWindowBinding
 import com.example.burgertracker.models.OnInfoWindowElemTouchListener
 import com.example.burgertracker.toLatLng
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -37,7 +37,6 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.material.snackbar.Snackbar
-import kotlinx.android.synthetic.main.info_window.view.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -45,10 +44,10 @@ import kotlinx.coroutines.launch
 
 private const val TAG = "MapFragment"
 private const val PERMISSION_ID = 10
-private var _binding: FragmentMapBinding? = null
-val binding get() = _binding!!
 
 class MapFragment : Fragment(), OnMapReadyCallback {
+    private var _binding: FragmentMapBinding? = null
+    val binding get() = _binding!!
     private lateinit var mapViewModel: MapViewModel
     private var permissionsResultFlag = false
     private val normalZoom = 17.0F
@@ -82,6 +81,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         super.onViewCreated(view, savedInstanceState)
         Log.d(TAG, "onViewCreated() called")
         mapViewModel = ViewModelProvider(requireActivity()).get(MapViewModel::class.java)
+        mapViewModel.currentFragment.value = this
         /**checks if
          * no permissions were granted even after requestPermissions() was called from onMapReady() so the user
          * denied the permissionsRequest and now need to display snackBar
@@ -209,15 +209,15 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                 )
             )
         }
-        val infoWindowView = layoutInflater.inflate(R.layout.info_window, null) as ViewGroup
+        val infoWindowBinding = InfoWindowBinding.inflate(layoutInflater)
         likeImageButtonClickListener =
-            object : OnInfoWindowElemTouchListener(infoWindowView.findViewById(R.id.like)) {
+            object : OnInfoWindowElemTouchListener(infoWindowBinding.like) {
                 override fun onClickConfirmed(v: View?, marker: Marker?) {
                     Log.d(TAG, "like clicked")
                     val likeButton = v as ImageButton
                     Toast.makeText(
                         requireContext(),
-                        infoWindow.mPlace.name,
+                        infoWindowBinding.placeName.text,
                         Toast.LENGTH_SHORT
                     ).show()
                 }
@@ -231,12 +231,12 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         )
         infoWindow =
             PlaceInfoWindow(
-                infoWindowView,
+                infoWindowBinding,
                 binding.mapWrapperLayout,
                 likeImageButtonClickListener
             )
         mapViewModel.appMap.value!!.setInfoWindowAdapter(infoWindow)
-        infoWindow.mWindow.like.setOnTouchListener(likeImageButtonClickListener)
+        infoWindowBinding.like.setOnTouchListener(likeImageButtonClickListener)
 
     }
 
@@ -256,7 +256,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     }
 
     /**
-     * Initializes [food_type_list] RecyclerView and [FoodListAdapter]
+     * Initializes the RecyclerView and [FoodListAdapter]
      */
     private fun initFoodTypeRecyclerView() {
         Log.d(TAG, "initFoodRecyclerView() called")
@@ -313,7 +313,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
     private fun initObservers() {
         Log.d(TAG, "initObservers called")
-        mapViewModel.userLocation.observe(this, Observer {
+        mapViewModel.userLocation.observe(this, {
             Log.d(TAG, "userLocation observer triggered -> $it")
             //initMap()
             mapViewModel.appMap.value!!.animateCamera(
@@ -337,32 +337,35 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                 }
             }
         })
-        mapViewModel.mediator.observe(this, Observer {
+        mapViewModel.mediator.observe(this, {
             Log.d(TAG, "Mediator observer triggered -> calling displayPlaces()")
             mapViewModel.setPlacesDistance(it)
             mapViewModel.setPlacesMarkerIcon(it)
             displayPlaces(it)
         })
-        mapViewModel.placesList.observe(this, Observer {
+        mapViewModel.placesList.observe(this, {
             if (!it.isNullOrEmpty()) {
                 Log.d(TAG, "placesList observer triggered -> calling displayPlaces()")
                 displayPlaces(it)
             }
         })
-        mapViewModel.currentUserPhoto.observe(this, Observer {
+        mapViewModel.currentUserPhoto.observe(this, {
             Log.d(TAG, "currentUserPhoto observer triggered -> displaying photo $it")
             (requireActivity() as MapActivity).binding.navView.getHeaderView(0)
                 .findViewById<ImageView>(R.id.userPhoto)
                 .setImageBitmap(it)
         })
 
-        mapViewModel.currentUser.observe(this, Observer {
-            Log.d(TAG, "currentUser observer triggered -> displaying user ${it.displayName}")
-            (requireActivity() as MapActivity).binding.navView.getHeaderView(0)
-                .findViewById<TextView>(R.id.userName).text = it.displayName
-            (requireActivity() as MapActivity).binding.navView.getHeaderView(0)
-                .findViewById<TextView>(R.id.userEmail).text = it.email
+        mapViewModel.currentUser.observe(this, {
+            if (it != null) {
+                Log.d(TAG, "currentUser observer triggered -> displaying user ${it.displayName}")
+                (requireActivity() as MapActivity).binding.navView.getHeaderView(0)
+                    .findViewById<TextView>(R.id.userName).text = it.displayName
+                (requireActivity() as MapActivity).binding.navView.getHeaderView(0)
+                    .findViewById<TextView>(R.id.userEmail).text = it.email
+            }
         })
+
     }
 
     private fun initMarkersOnClick() {
