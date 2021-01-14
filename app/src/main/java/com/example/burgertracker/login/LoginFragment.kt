@@ -45,7 +45,7 @@ class LoginFragment : Fragment() {
         Log.d(TAG, "onViewCreated() called")
         super.onViewCreated(view, savedInstanceState)
         mapViewModel = ViewModelProvider(requireActivity()).get(MapViewModel::class.java)
-        mapViewModel.currentFragment.value = this
+        mapViewModel.currentFragment.value = this::class.java.name
         auth = FirebaseAuth.getInstance()
         if (auth.currentUser != null) {
             Log.d(

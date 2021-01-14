@@ -81,7 +81,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         super.onViewCreated(view, savedInstanceState)
         Log.d(TAG, "onViewCreated() called")
         mapViewModel = ViewModelProvider(requireActivity()).get(MapViewModel::class.java)
-        mapViewModel.currentFragment.value = this
+        mapViewModel.currentFragment.value = this::class.java.name
         /**checks if
          * no permissions were granted even after requestPermissions() was called from onMapReady() so the user
          * denied the permissionsRequest and now need to display snackBar

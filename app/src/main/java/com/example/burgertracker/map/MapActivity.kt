@@ -112,7 +112,7 @@ class MapActivity : AppCompatActivity() {
         }
         mapViewModel.currentFragment.observe(this, {
             when (it) {
-                is LoginFragment -> {
+                LoginFragment::class.java.name -> {
                     binding.toggle.isDrawerIndicatorEnabled =
                         false // disables the DrawerMenuButton when LoginFragment is visible
                 }
