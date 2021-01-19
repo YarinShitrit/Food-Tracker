@@ -1,17 +1,15 @@
 package com.example.burgertracker.map
 
-import android.app.Application
-import android.content.Context
 import android.graphics.Bitmap
 import android.location.Location
 import android.util.Log
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.burgertracker.AppRepository
 import com.example.burgertracker.R
-import com.example.burgertracker.data.Place
+import com.example.burgertracker.placesData.Place
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
@@ -19,25 +17,25 @@ import com.google.firebase.auth.FirebaseUser
 import com.squareup.picasso.Picasso
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import javax.inject.Singleton
 
 
 private const val TAG = "MapViewModel"
 
-class MapViewModel(application: Application) : AndroidViewModel(application) {
-    private val appKey = application.resources.getString(R.string.google_maps_key)
-    private val appRepository = AppRepository()
+@Singleton
+class MapViewModel(private val appRepository: AppRepository) : ViewModel() {
+    lateinit var appKey: String
     var isMapAvailable = false // becomes true when onMapReady() is called
     val appMap = MutableLiveData<GoogleMap>()
     val currentUser = MutableLiveData<FirebaseUser?>()
     val currentUserPhoto = MutableLiveData<Bitmap>()
     val currentFragment = MutableLiveData<String>()
+    val currentFocusedPlace = MutableLiveData<Place>()
     val placesList = MutableLiveData<ArrayList<Place>>()
     val mediator = MediatorLiveData<ArrayList<Place>>()
     val queryIcon = MutableLiveData<String>()
     val userLocation = MutableLiveData<LatLng>()
-    val searchRadius = MutableLiveData(
-        application.getSharedPreferences("prefs", Context.MODE_PRIVATE).getInt("radius", 15)
-    )
+    private val searchRadius = 5
 
     init {
         placesList.value = arrayListOf()
@@ -54,17 +52,26 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
      *Creates a Retrofit call to Google Places API to retrieve JSON data about nearby places
      *@param query String?- the query entered for specific type of nearby places or null for getting all types nearby places
      */
-    suspend fun getNearbyPlaces(query: String?) {
+    fun getNearbyPlaces(query: String?) {
         Log.d(TAG, "getNearbyPlaces called")
-        appRepository.getNearbyPlaces(
-            query,
-            "restaurant",
-            userLocation.value!!,
-            appKey,
-            searchRadius.value!! * 1000
-        )
+        viewModelScope.launch(Dispatchers.IO) {
+            appRepository.getNearbyPlaces(
+                query,
+                "restaurant",
+                userLocation.value!!,
+                appKey,
+                searchRadius * 1000
+            )
+        }
     }
 
+    /*
+        fun insertPlace(place: Place) =
+            viewModelScope.launch(Dispatchers.IO) { appRepository.insertPlace(place) }
+
+        fun deletePlace(place: Place) =
+            viewModelScope.launch(Dispatchers.IO) { appRepository.deletePlace(place) }
+    */
     fun setPlacesMarkerIcon(list: ArrayList<Place>) {
         if (!queryIcon.value.isNullOrEmpty()) {
             list.forEach {
@@ -137,15 +144,16 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun downloadCurrentUserPhoto(user: FirebaseUser) {
+    fun downloadCurrentUserPhoto() {
         Log.d(
             TAG,
-            "downloadCurrentUserPhoto called -> downloading photo from ${user.photoUrl.toString()}"
+            "downloadCurrentUserPhoto called -> downloading photo from ${currentUser.value?.photoUrl.toString()}"
         )
         viewModelScope.launch(Dispatchers.IO) {
             currentUserPhoto.postValue(
-                Picasso.get().load(user.photoUrl).resize(200, 200).get()
+                Picasso.get().load(currentUser.value?.photoUrl).resize(200, 200).get()
             )
         }
     }
+
 }

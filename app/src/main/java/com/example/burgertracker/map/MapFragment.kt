@@ -1,8 +1,12 @@
 package com.example.burgertracker.map
 
 import android.Manifest
+import android.app.Activity
+import android.app.Application
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.location.Location
+import android.location.LocationManager
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
@@ -19,16 +23,20 @@ import androidx.appcompat.widget.SearchView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat.checkSelfPermission
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
+import androidx.fragment.app.FragmentActivity
+import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.burgertracker.AppUtils
 import com.example.burgertracker.R
-import com.example.burgertracker.data.Place
+import com.example.burgertracker.dagger.Injector
 import com.example.burgertracker.databinding.FragmentMapBinding
 import com.example.burgertracker.databinding.InfoWindowBinding
 import com.example.burgertracker.models.OnInfoWindowElemTouchListener
+import com.example.burgertracker.models.PlaceInfoWindow
+import com.example.burgertracker.placesData.Place
 import com.example.burgertracker.toLatLng
+import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -37,20 +45,21 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.material.snackbar.Snackbar
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 
 private const val TAG = "MapFragment"
 private const val PERMISSION_ID = 10
+private const val normalZoom = 14.0F
 
 class MapFragment : Fragment(), OnMapReadyCallback {
     private var _binding: FragmentMapBinding? = null
     val binding get() = _binding!!
-    private lateinit var mapViewModel: MapViewModel
+
+    @Inject
+    internal lateinit var mapViewModelFactory: MapViewModelFactory
+    private val mapViewModel: MapViewModel by viewModels({ activity as MapActivity }) { mapViewModelFactory }
     private var permissionsResultFlag = false
-    private val normalZoom = 17.0F
     private val permissionsNeeded = arrayOf(
         Manifest.permission.ACCESS_COARSE_LOCATION,
         Manifest.permission.ACCESS_FINE_LOCATION,
@@ -58,6 +67,13 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     )
     private lateinit var likeImageButtonClickListener: OnInfoWindowElemTouchListener
     private lateinit var infoWindow: PlaceInfoWindow
+
+    override fun onAttach(activity: Activity) {
+        Log.d(TAG, "onAttach() called")
+        Injector.applicationComponent.inject(this)
+        super.onAttach(activity)
+
+    }
 
     override fun onCreate(p0: Bundle?) {
         super.onCreate(p0)
@@ -80,8 +96,8 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         Log.d(TAG, "onViewCreated() called")
-        mapViewModel = ViewModelProvider(requireActivity()).get(MapViewModel::class.java)
         mapViewModel.currentFragment.value = this::class.java.name
+        Log.d(TAG, "ViewModel is ${mapViewModel.hashCode()}")
         /**checks if
          * no permissions were granted even after requestPermissions() was called from onMapReady() so the user
          * denied the permissionsRequest and now need to display snackBar
@@ -108,7 +124,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         Log.d(TAG, "onResume() called")
         if (checkPermissions()) {
             if (mapViewModel.appMap.value != null) {
-                AppUtils().getCurrentLocation(requireActivity())
+                getCurrentLocation(requireActivity())
                 initFoodTypeRecyclerView()
                 initMap()
                 initMarkersOnClick()
@@ -140,7 +156,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             initObservers()
             initMarkersOnClick()
             initFoodTypeRecyclerView()
-            AppUtils().getCurrentLocation(requireActivity())
+            getCurrentLocation(requireActivity())
             if (!mapViewModel.placesList.value.isNullOrEmpty()) {
                 displayPlaces(mapViewModel.placesList.value!!)
             }
@@ -217,9 +233,10 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                     val likeButton = v as ImageButton
                     Toast.makeText(
                         requireContext(),
-                        infoWindowBinding.placeName.text,
+                        "${infoWindowBinding.placeName.text} added to favorites ",
                         Toast.LENGTH_SHORT
                     ).show()
+                    //TODO add/remove the favorite place from the database
                 }
             }
         // MapWrapperLayout initialization
@@ -238,6 +255,62 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         mapViewModel.appMap.value!!.setInfoWindowAdapter(infoWindow)
         infoWindowBinding.like.setOnTouchListener(likeImageButtonClickListener)
 
+    }
+
+
+    /**
+     * Gets the user current location and updates [MapViewModel.userLocation] accordingly
+     * @param activity The activity that calls the method, Necessary for [LocationServices.getFusedLocationProviderClient]
+     */
+    fun getCurrentLocation(activity: FragmentActivity) {
+        Log.d(TAG, "getCurrentLocation called")
+        if (ActivityCompat.checkSelfPermission(
+                activity,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+            &&
+            (ActivityCompat.checkSelfPermission(
+                activity,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED)
+        ) {
+            try {
+                //Try to get location from LocationManager
+                val nManager =
+                    activity.getSystemService(Application.LOCATION_SERVICE) as LocationManager
+                if (nManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                    val locationGPS: Location? =
+                        nManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+                    if (locationGPS != null) {
+                        Log.d(
+                            TAG,
+                            "Received location from LocationManager -> Current location is ${locationGPS.toLatLng()}"
+                        )
+                        mapViewModel.userLocation.value = locationGPS.toLatLng()
+                    } else {
+                        //Try to get location from LocationServices
+                        val currentLocationTask =
+                            LocationServices.getFusedLocationProviderClient(activity).lastLocation
+                        currentLocationTask.addOnSuccessListener(activity) {
+                            if (currentLocationTask.isSuccessful) {
+                                Log.d(
+                                    TAG,
+                                    "Received Location from LocationServices -> Current location is ${it.toLatLng()}"
+                                )
+                                if (it != null) {
+                                    mapViewModel.userLocation.value = it.toLatLng()
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    Log.d(TAG, "GPS not available")
+                    Toast.makeText(activity, "Turn on GPS", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Log.d(TAG, "Could not receive current location -> ${e.localizedMessage}")
+            }
+        }
     }
 
     /**
@@ -282,9 +355,8 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                 mapViewModel.placesList.value?.clear()
                 mapViewModel.appMap.value!!.clear()
                 mapViewModel.queryIcon.value = adapter.itemClicked
-                CoroutineScope(Dispatchers.IO).launch {
-                    mapViewModel.getNearbyPlaces(adapter.itemClicked)
-                }
+                mapViewModel.getNearbyPlaces(adapter.itemClicked)
+
             }
         })
         binding.foodTypeList.adapter = adapter
@@ -297,9 +369,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                 Log.d(TAG, " calling getNearbyPlaces from query")
                 mapViewModel.placesList.value?.clear()
                 mapViewModel.appMap.value!!.clear()
-                CoroutineScope(Dispatchers.IO).launch {
-                    mapViewModel.getNearbyPlaces(query)
-                }
+                mapViewModel.getNearbyPlaces(query)
                 //clearFocus() closes the keyboard after performing the search
                 binding.mapSearch.clearFocus()
                 return true
@@ -332,9 +402,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
             if (mapViewModel.placesList.value.isNullOrEmpty()) {
                 Log.d(TAG, "calling getNearbyPlaces() from placesList observer")
-                CoroutineScope(Dispatchers.IO).launch {
-                    mapViewModel.getNearbyPlaces(null)
-                }
+                mapViewModel.getNearbyPlaces(null)
             }
         })
         mapViewModel.mediator.observe(this, {
@@ -365,7 +433,6 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                     .findViewById<TextView>(R.id.userEmail).text = it.email
             }
         })
-
     }
 
     private fun initMarkersOnClick() {
@@ -373,8 +440,11 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         mapViewModel.appMap.value!!.setOnMarkerClickListener {
             val place = mapViewModel.placesList.value?.find { place ->
                 LatLng(place.geometry.location.lat, place.geometry.location.lng) == it.position
-            }!!
+            }!!.also {
+                mapViewModel.currentFocusedPlace.value = it
+            }
             infoWindow.setPlace(place)
+            //TODO check if the place is in favorites and show the like button as marked
             mapViewModel.appMap.value!!.animateCamera(
                 CameraUpdateFactory.newLatLngZoom(
                     LatLng(
@@ -382,12 +452,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                         place.geometry.location.lng
                     ), mapViewModel.appMap.value!!.cameraPosition.zoom
                 )
-            ).apply {
-                Log.d(
-                    TAG,
-                    "Marker Location is ${mapViewModel.appMap.value!!.cameraPosition.target}"
-                )
-            }
+            )
             false
         }
     }
@@ -407,5 +472,4 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         }
             .show()
     }
-
 }

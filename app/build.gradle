@@ -1,5 +1,6 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-kapt'
 apply plugin: 'kotlin-android-extensions'
 apply plugin: 'com.google.gms.google-services'
 apply plugin: 'com.google.firebase.crashlytics'
@@ -80,7 +81,6 @@ dependencies {
     //Facebook Login
     implementation 'com.facebook.android:facebook-android-sdk:5.15.3'
 
-
     //Testing + Espresso
     testImplementation 'junit:junit:4.13.1'
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
@@ -104,5 +104,9 @@ dependencies {
 
     //Picasso
     implementation 'com.squareup.picasso:picasso:2.71828'
+
+    //Dagger2
+    implementation 'com.google.dagger:dagger:2.31'
+    kapt 'com.google.dagger:dagger-compiler:2.31'
 
 }

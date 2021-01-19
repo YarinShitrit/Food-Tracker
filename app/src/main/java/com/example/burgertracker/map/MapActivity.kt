@@ -10,10 +10,12 @@ import androidx.core.view.GravityCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.findNavController
 import com.example.burgertracker.R
+import com.example.burgertracker.dagger.Injector
 import com.example.burgertracker.databinding.MapActivityBinding
 import com.example.burgertracker.databinding.NavHeaderBinding
 import com.example.burgertracker.login.LoginFragment
 import com.firebase.ui.auth.AuthUI
+import javax.inject.Inject
 
 private const val TAG = "MapActivity"
 
@@ -21,13 +23,19 @@ private const val TAG = "MapActivity"
 class MapActivity : AppCompatActivity() {
     lateinit var binding: MapActivityBinding
     private lateinit var navHeaderBinding: NavHeaderBinding
+
+    @Inject
+    internal lateinit var mapViewModelFactory: MapViewModelFactory
     private lateinit var mapViewModel: MapViewModel
     private val MapActivityBinding.toggle: ActionBarDrawerToggle by lazy { setToggle() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        Log.d(TAG, "onCreate() called, ${this.hashCode()}")
+        Injector.applicationComponent.inject(this)
+        Log.d(TAG, "onCreate() called")
         super.onCreate(savedInstanceState)
-        mapViewModel = ViewModelProvider(this).get(MapViewModel::class.java)
+        mapViewModel = ViewModelProvider(this, mapViewModelFactory).get(MapViewModel::class.java)
+        mapViewModel.appKey = resources.getString(R.string.google_maps_key)
+        Log.d(TAG, "ViewModel is ${mapViewModel.hashCode()}")
         requestWindowFeature(Window.FEATURE_NO_TITLE)
         binding = MapActivityBinding.inflate(layoutInflater)
         navHeaderBinding = NavHeaderBinding.inflate(layoutInflater)
@@ -134,6 +142,8 @@ class MapActivity : AppCompatActivity() {
         toggle.syncState()
         return toggle
     }
+
+
 }
 
 

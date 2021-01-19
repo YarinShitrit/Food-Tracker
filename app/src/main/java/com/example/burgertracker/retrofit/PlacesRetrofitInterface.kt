@@ -1,7 +1,6 @@
 package com.example.burgertracker.retrofit
 
-import com.example.burgertracker.data.PlaceResult
-import retrofit2.Call
+import com.example.burgertracker.placesData.PlaceResult
 import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Query

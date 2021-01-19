@@ -1,11 +1,9 @@
-package com.example.burgertracker.map
+package com.example.burgertracker.models
 
 
 import android.view.View
-import com.example.burgertracker.data.Place
 import com.example.burgertracker.databinding.InfoWindowBinding
-import com.example.burgertracker.models.MapWrapperLayout
-import com.example.burgertracker.models.OnInfoWindowElemTouchListener
+import com.example.burgertracker.placesData.Place
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.Marker
 

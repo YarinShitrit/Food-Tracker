@@ -2,20 +2,29 @@ package com.example.burgertracker
 
 import android.util.Log
 import androidx.lifecycle.MutableLiveData
-import com.example.burgertracker.data.Place
-import com.example.burgertracker.data.PlaceResult
+import com.example.burgertracker.dagger.Injector
+import com.example.burgertracker.placesData.Place
+import com.example.burgertracker.placesData.PlaceResult
 import com.example.burgertracker.retrofit.PlacesRetrofitInterface
 import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.delay
 import retrofit2.Response
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
+import javax.inject.Inject
+import javax.inject.Singleton
 
-private const val BASE_URL = "https://maps.googleapis.com"
 private const val TAG = "AppRepository"
 
+@Singleton
 class AppRepository {
+
+    init {
+        Injector.applicationComponent.inject(this)
+    }
+
     val placesList = MutableLiveData<ArrayList<Place>>()
+
+    @Inject
+    lateinit var retrofit: PlacesRetrofitInterface
 
     suspend fun getNearbyPlaces(
         query: String?,
@@ -25,14 +34,10 @@ class AppRepository {
         searchRadius: Int
     ) {
         Log.d(TAG, "getNearbyPlaces called")
-        val retrofit = Retrofit.Builder()
-            .baseUrl(BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-        val placesInterface = retrofit.create(PlacesRetrofitInterface::class.java)
+        //val placesInterface = retrofit.create(PlacesRetrofitInterface::class.java)
         val retrofitResponse: Response<PlaceResult>
         if (!query.isNullOrEmpty()) {
-            retrofitResponse = placesInterface.getNearbyPlaces(
+            retrofitResponse = retrofit.getNearbyPlaces(
                 query.toString(),
                 type,
                 "${location.latitude}, ${location.longitude}",
@@ -40,7 +45,7 @@ class AppRepository {
                 key
             )
         } else {
-            retrofitResponse = placesInterface.getNearbyPlaces(
+            retrofitResponse = retrofit.getNearbyPlaces(
                 type,
                 "${location.latitude}, ${location.longitude}",
                 searchRadius,
@@ -60,13 +65,7 @@ class AppRepository {
 
     private suspend fun getNearbyPlacesWithToken(key: String, nextPageToken: String) {
         Log.d(TAG, "getNearbyPlacesWithToken called")
-        val retrofit = Retrofit.Builder()
-            .baseUrl(BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-        val placesInterface = retrofit.create(PlacesRetrofitInterface::class.java)
-        val retrofitResponse: Response<PlaceResult>
-        retrofitResponse = placesInterface.getNearbyPlaces(
+        val retrofitResponse: Response<PlaceResult> = retrofit.getNearbyPlaces(
             nextPageToken,
             key
         )
@@ -78,4 +77,11 @@ class AppRepository {
             }
         }
     }
+/*
+    suspend fun insertPlace(place: Place) = placesDao.insertPlace(place)
+    suspend fun deletePlace(place: Place) = placesDao.deletePlace(place)
+    suspend fun getPlace(place: Place) = placesDao.getIfPlaceIsFavorite(place.place_id)
+    suspend fun getAllPlaces() = placesDao.getAllPlaces()
+    suspend fun deleteAllPlaces() = placesDao.deleteAllPlaces()
+*/
 }

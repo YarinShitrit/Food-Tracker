@@ -8,25 +8,45 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
+import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import com.example.burgertracker.R
+import com.example.burgertracker.dagger.Injector
 import com.example.burgertracker.databinding.FragmentLoginBinding
+import com.example.burgertracker.map.MapActivity
 import com.example.burgertracker.map.MapViewModel
+import com.example.burgertracker.map.MapViewModelFactory
 import com.firebase.ui.auth.AuthUI
 import com.firebase.ui.auth.IdpResponse
 import com.google.firebase.FirebaseException
 import com.google.firebase.auth.*
 import java.util.concurrent.TimeUnit
+import javax.inject.Inject
 
 private const val TAG = "LoginFragment"
 private const val RC_SIGN_IN = 123
 
 class LoginFragment : Fragment() {
+
     private var _binding: FragmentLoginBinding? = null
     private val binding get() = _binding!!
-    private lateinit var mapViewModel: MapViewModel
+
+    @Inject
+    internal lateinit var mapViewModelFactory: MapViewModelFactory
+    private val mapViewModel: MapViewModel by viewModels({ activity as MapActivity }) { mapViewModelFactory }
     private lateinit var auth: FirebaseAuth
+
+    override fun onAttach(activity: Activity) {
+        Log.d(TAG, "onAttach() called")
+        Injector.applicationComponent.inject(this)
+        super.onAttach(activity)
+    }
+
+    override fun onCreate(p0: Bundle?) {
+        super.onCreate(p0)
+        Log.d(TAG, "onCreate() called")
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -44,8 +64,8 @@ class LoginFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         Log.d(TAG, "onViewCreated() called")
         super.onViewCreated(view, savedInstanceState)
-        mapViewModel = ViewModelProvider(requireActivity()).get(MapViewModel::class.java)
         mapViewModel.currentFragment.value = this::class.java.name
+        Log.d(TAG, "ViewModel is ${mapViewModel.hashCode()}")
         auth = FirebaseAuth.getInstance()
         if (auth.currentUser != null) {
             Log.d(
@@ -161,7 +181,7 @@ class LoginFragment : Fragment() {
     }
 
     private fun fetchUserData(user: FirebaseUser) {
-        mapViewModel.downloadCurrentUserPhoto(user)
         mapViewModel.currentUser.value = user
+        mapViewModel.downloadCurrentUserPhoto()
     }
 }
