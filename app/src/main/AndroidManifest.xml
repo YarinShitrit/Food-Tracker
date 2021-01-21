@@ -7,21 +7,12 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
     <application
-        android:allowBackup="true"
+        android:name=".AppUtils"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".MainActivity"></activity>
-        <activity
-            android:name=".SettingsActivity"
-            android:label="@string/title_activity_settings"
-            android:parentActivityName=".MapsActivity">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value=".MapsActivity" />
-        </activity>
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"
@@ -29,23 +20,29 @@
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-8164031763957320~7609387007" />
 
         <activity
-            android:name=".MapsActivity"
+            android:name=".map.MapActivity"
             android:label="@string/title_activity_maps">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-                <action android:name="android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
+                <action android:name="android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS" />
             </intent-filter>
         </activity>
-        <activity android:name=".MapHandler" />
 
         <receiver android:name=".AppReceiver">
             <intent-filter>
                 <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+        <receiver android:name=".location.GPSCheckReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.PROVIDER_CHANGED" />
             </intent-filter>
         </receiver>
     </application>

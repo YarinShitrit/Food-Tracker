@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "806291373663",
+    "project_id": "burgertracker",
+    "storage_bucket": "burgertracker.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:806291373663:android:c90dec11ada8c7026925ea",
+        "android_client_info": {
+          "package_name": "com.example.burgertracker"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "806291373663-6qlfvdvitbe76o8tgav72m8mijnkur5s.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBa4X3qk7N4YCrz1MoGtZvrKOrEDtptIUo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "806291373663-6qlfvdvitbe76o8tgav72m8mijnkur5s.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -2,19 +2,23 @@ package com.example.burgertracker.db
 
 import androidx.lifecycle.LiveData
 import androidx.room.*
-import com.google.android.libraries.places.api.model.Place
+import com.example.burgertracker.placesData.Place
+
 
 @Dao
 interface PlaceDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertPlace(place: PlaceEntity)
+    fun insertPlace(place: Place)
 
-    @Query("SELECT * FROM placeentity")
-    fun getAllPlaces(): LiveData<List<PlaceEntity>>
+    @Query("SELECT * FROM places")
+    fun getAllPlaces(): LiveData<ArrayList<Place>>
 
-    @Query("DELETE FROM placeentity")
+    @Query("SELECT * FROM places WHERE place_id = :placeID")
+    fun getIfPlaceIsFavorite(placeID: String): Place
+
+    @Delete
     fun deletePlace(placeName: Place)
 
-    @Query("DELETE FROM placeentity")
+    @Query("DELETE FROM places")
     fun deleteAllPlaces()
 }

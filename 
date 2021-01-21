@@ -1,0 +1,131 @@
+[33mcommit 130464e104e1276ddb0279d19732f23f9e0feb14[m[33m ([m[1;36mHEAD -> [m[1;32mInfoWindow[m[33m)[m
+Author: YarinShitrit <yarinshitrit@gmail.com>
+Date:   Tue Sep 15 17:07:09 2020 +0300
+
+    InfoWindow added
+
+[1mdiff --git a/app/src/main/java/com/example/burgertracker/map/MapTestActivity.kt b/app/src/main/java/com/example/burgertracker/map/MapTestActivity.kt[m
+[1mdeleted file mode 100644[m
+[1mindex b99b5b1..0000000[m
+[1m--- a/app/src/main/java/com/example/burgertracker/map/MapTestActivity.kt[m
+[1m+++ /dev/null[m
+[36m@@ -1,118 +0,0 @@[m
+[31m-package com.example.burgertracker.map[m
+[31m-[m
+[31m-import android.app.Activity[m
+[31m-import android.content.Context[m
+[31m-import android.os.Bundle[m
+[31m-import android.util.Log[m
+[31m-import android.view.View[m
+[31m-import android.view.ViewGroup[m
+[31m-import android.widget.ImageButton[m
+[31m-import android.widget.TextView[m
+[31m-import android.widget.Toast[m
+[31m-import androidx.appcompat.app.AppCompatActivity[m
+[31m-import com.example.burgertracker.models.MapWrapperLayout[m
+[31m-import com.example.burgertracker.models.OnInfoWindowElemTouchListener[m
+[31m-import com.google.android.gms.maps.GoogleMap[m
+[31m-import com.google.android.gms.maps.model.LatLng[m
+[31m-import com.google.android.gms.maps.model.Marker[m
+[31m-import com.google.android.gms.maps.model.MarkerOptions[m
+[31m-import com.example.burgertracker.R[m
+[31m-import com.google.android.gms.maps.OnMapReadyCallback[m
+[31m-import com.google.android.gms.maps.SupportMapFragment[m
+[31m-[m
+[31m-[m
+[31m-private const val TAG = "MapTestActivity"[m
+[31m-[m
+[31m-class MapTestActivity : AppCompatActivity(), OnMapReadyCallback {[m
+[31m-    private var infoWindow: ViewGroup? = null[m
+[31m-    private var placeName: TextView? = null[m
+[31m-    private var placeLocation: TextView? = null[m
+[31m-    private var callButton: ImageButton? = null[m
+[31m-    private var infoButtonListener: OnInfoWindowElemTouchListener? = null[m
+[31m-    lateinit var map: GoogleMap[m
+[31m-    override fun onCreate(savedInstanceState: Bundle?) {[m
+[31m-        Log.d(TAG, "onCreate called")[m
+[31m-        super.onCreate(savedInstanceState)[m
+[31m-        setContentView(R.layout.test_map_layout)[m
+[31m-        val mapFragment = supportFragmentManager[m
+[31m-            .findFragmentById(R.id.testMap) as SupportMapFragment[m
+[31m-        mapFragment.getMapAsync(this)[m
+[31m-    }[m
+[31m-[m
+[31m-    companion object {[m
+[31m-        fun getPixelsFromDp(context: Context, dp: Float): Int {[m
+[31m-            val scale = context.resources.displayMetrics.density[m
+[31m-            return (dp * scale + 0.5f).toInt()[m
+[31m-        }[m
+[31m-    }[m
+[31m-[m
+[31m-    override fun onMapReady(p0: GoogleMap) {[m
+[31m-        Log.d(TAG, "onMapReady called")[m
+[31m-        map = p0[m
+[31m-        val mapWrapperLayout = findViewById<View>(R.id.map_relative_layout) as MapWrapperLayout[m
+[31m-        // MapWrapperLayout initialization[m
+[31m-        // 39 - default marker height[m
+[31m-        // 20 - offset between the default InfoWindow bottom edge and it's content bottom edge[m
+[31m-        mapWrapperLayout.init(map, getPixelsFromDp(this, 39 + 20.toFloat()))[m
+[31m-[m
+[31m-        // We want to reuse the info window for all the markers,[m
+[31m-        // so let's create only one class member instance[m
+[31m-        infoWindow = layoutInflater.inflate(R.layout.info_window_view, null) as ViewGroup?[m
+[31m-        placeName = infoWindow!!.findViewById<View>(R.id.placeName) as TextView[m
+[31m-        placeLocation = infoWindow!!.findViewById<View>(R.id.placeLocation) as TextView[m
+[31m-        callButton = infoWindow!!.findViewById<View>(R.id.callButton) as ImageButton[m
+[31m-[m
+[31m-        // Setting custom OnTouchListener which deals with the pressed state[m
+[31m-        // so it shows up[m
+[31m-        infoButtonListener = object : OnInfoWindowElemTouchListener([m
+[31m-            callButton!![m
+[31m-[m
+[31m-        ) {[m
+[31m-            override fun onClickConfirmed(v: View?, marker: Marker?) {[m
+[31m-                // Here we can perform some action triggered after clicking the button[m
+[31m-                Toast.makeText([m
+[31m-                    this@MapTestActivity,[m
+[31m-                    marker!!.title + "'s button clicked!",[m
+[31m-                    Toast.LENGTH_SHORT[m
+[31m-                ).show()[m
+[31m-            }[m
+[31m-        }[m
+[31m-        callButton!!.setOnTouchListener(infoButtonListener)[m
+[31m-        map.setInfoWindowAdapter(object : GoogleMap.InfoWindowAdapter {[m
+[31m-            override fun getInfoWindow(marker: Marker): View? {[m
+[31m-                return null[m
+[31m-            }[m
+[31m-[m
+[31m-            override fun getInfoContents(marker: Marker): View {[m
+[31m-                // Setting up the infoWindow with current's marker info[m
+[31m-                placeName!!.text = marker.title[m
+[31m-                placeLocation!!.text = marker.snippet[m
+[31m-                (infoButtonListener as OnInfoWindowElemTouchListener).setMarker(marker)[m
+[31m-                // We must call this to set the current marker and infoWindow references[m
+[31m-                // to the MapWrapperLayout[m
+[31m-                mapWrapperLayout.setMarkerWithInfoWindow(marker, infoWindow)[m
+[31m-                return infoWindow!![m
+[31m-            }[m
+[31m-        })[m
+[31m-[m
+[31m-        // Let's add a couple of markers[m
+[31m-        map.addMarker([m
+[31m-            MarkerOptions()[m
+[31m-                .title("Prague")[m
+[31m-                .snippet("Czech Republic")[m
+[31m-                .position(LatLng(50.08, 14.43))[m
+[31m-        )[m
+[31m-        map.addMarker([m
+[31m-            MarkerOptions()[m
+[31m-                .title("Paris")[m
+[31m-                .snippet("France")[m
+[31m-                .position(LatLng(48.86, 2.33))[m
+[31m-        )[m
+[31m-        map.addMarker([m
+[31m-            MarkerOptions()[m
+[31m-                .title("London")[m
+[31m-                .snippet("United Kingdom")[m
+[31m-                .position(LatLng(51.51, -0.1))[m
+[31m-        )[m
+[31m-    }[m
+[31m-}[m
+\ No newline at end of file[m
