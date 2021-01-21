@@ -7,22 +7,22 @@ import androidx.room.RoomDatabase
 import com.example.burgertracker.placesData.Place
 
 @Database(entities = [Place::class], version = 1)
-abstract class PlaceDatabase : RoomDatabase() {
+abstract class PlaceDataBase : RoomDatabase() {
 
     abstract fun getPlaceDao(): PlaceDao
 
     companion object {
         @Volatile
-        private var instance: PlaceDatabase? = null
+        private var instance: PlaceDataBase? = null
         private val LOCK = Any()
 
-        fun getDatabase(context: Context) = instance ?: synchronized(LOCK) {
+        operator fun invoke(context: Context) = instance ?: synchronized(LOCK) {
             instance ?: buildDatabase(context).also {
                 instance = it
             }
         }
 
         private fun buildDatabase(context: Context) =
-            Room.databaseBuilder(context, PlaceDatabase::class.java, "place_database").build()
+            Room.databaseBuilder(context, PlaceDataBase::class.java, "place_database").build()
     }
 }
