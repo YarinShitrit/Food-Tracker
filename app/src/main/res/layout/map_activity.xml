@@ -57,6 +57,8 @@
                 android:textColor="#FF000000"
                 android:textSize="16sp"
                 android:textStyle="bold"
+                android:clickable="true"
+                android:focusable="true"
                 app:drawableStartCompat="@drawable/ic_login" />
         </LinearLayout>
 

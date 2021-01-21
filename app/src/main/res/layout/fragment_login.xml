@@ -47,7 +47,7 @@
 
                 <EditText
                     android:id="@+id/phone_number_editText"
-                    android:layout_width="match_parent"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:hint="Phone Number" />
@@ -62,6 +62,7 @@
                     android:textAllCaps="false"
                     android:textColor="@color/GoogleTextColor"
                     android:textStyle="bold" />
+
             </LinearLayout>
 
 
@@ -72,8 +73,10 @@
                 android:layout_gravity="center"
                 android:layout_marginTop="25dp"
                 android:background="@drawable/rounded_corners"
+                android:clickable="true"
                 android:drawableStart="@drawable/google_icon"
                 android:drawablePadding="8dp"
+                android:focusable="true"
                 android:padding="8dp"
                 android:text="Sign in with Google"
                 android:textAllCaps="false"

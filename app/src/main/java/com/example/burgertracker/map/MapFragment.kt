@@ -352,6 +352,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             }
         adapter.setClickListener(object : ViewHolderClickListener {
             override fun click() {
+                Log.d(TAG, "item clicked")
                 mapViewModel.placesList.value?.clear()
                 mapViewModel.appMap.value!!.clear()
                 mapViewModel.queryIcon.value = adapter.itemClicked
