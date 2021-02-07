@@ -3,22 +3,23 @@ package com.example.burgertracker.db
 import androidx.lifecycle.LiveData
 import androidx.room.*
 import com.example.burgertracker.placesData.Place
+import kotlinx.coroutines.Deferred
 
 
 @Dao
 interface PlaceDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertPlace(place: Place)
+    suspend fun insertPlace(place: Place)
 
     @Query("SELECT * FROM places")
-    fun getAllPlaces(): LiveData<ArrayList<Place>>
+    suspend fun getAllPlacesAsync(): List<Place>
 
     @Query("SELECT * FROM places WHERE place_id = :placeID")
-    fun getIfPlaceIsFavorite(placeID: String): Place
+    suspend fun getIfPlaceIsFavorite(placeID: String): Place
 
     @Delete
-    fun deletePlace(placeName: Place)
+    suspend fun deletePlace(placeName: Place)
 
     @Query("DELETE FROM places")
-    fun deleteAllPlaces()
+    suspend fun deleteAllPlaces()
 }

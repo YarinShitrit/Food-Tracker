@@ -7,6 +7,7 @@ import android.widget.*
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
+import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.findNavController
 import com.example.burgertracker.R
@@ -30,9 +31,9 @@ class MapActivity : AppCompatActivity() {
     private val MapActivityBinding.toggle: ActionBarDrawerToggle by lazy { setToggle() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        Injector.applicationComponent.inject(this)
         Log.d(TAG, "onCreate() called")
         super.onCreate(savedInstanceState)
+        Injector.applicationComponent.inject(this)
         mapViewModel = ViewModelProvider(this, mapViewModelFactory).get(MapViewModel::class.java)
         mapViewModel.appKey = resources.getString(R.string.google_maps_key)
         Log.d(TAG, "ViewModel is ${mapViewModel.hashCode()}")
@@ -123,9 +124,11 @@ class MapActivity : AppCompatActivity() {
                 LoginFragment::class.java.name -> {
                     binding.toggle.isDrawerIndicatorEnabled =
                         false // disables the DrawerMenuButton when LoginFragment is visible
+                    binding.drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)//Locks the drawer menu from being opened
                 }
                 else -> {
                     binding.toggle.isDrawerIndicatorEnabled = true
+                    binding.drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED)//Unlocks the drawer menu
                 }
             }
         })

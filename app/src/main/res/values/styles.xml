@@ -9,12 +9,19 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
     </style>
+
     <style name="myTheme" parent="AppTheme">
 
     </style>
 
     <style name="DarkStyle" parent="TextAppearance.AppCompat">
         <item name="android:textColor">#00FF00</item>
+
+    </style>
+
+    <style name="BottomNavigation" parent="Widget.MaterialComponents.BottomNavigationView.Colored">
+
+
 
     </style>
 

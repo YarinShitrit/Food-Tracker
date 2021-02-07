@@ -2,7 +2,6 @@
     <string name="app_name">FoodTracker</string>
     <string name="title_activity_maps">FoodTracker</string>
 
-    <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="search_hint">Search Food</string>
     <string name="channel_name">\"BurgerAppNotification\"</string>
@@ -10,6 +9,8 @@
     <string name="drawer_open">draw open</string>
     <string name="drawer_close">draw close</string>
     <string name="title_activity_settings">Settings</string>
+    <string name="facebook_app_id">234639304845154</string>
+    <string name="fb_login_protocol_scheme">fb234639304845154</string>
 
     <!-- Preference Titles -->
     <string name="messages_header">Messages</string>
@@ -25,4 +26,6 @@
     <string name="attachment_summary_on">Automatically download attachments for incoming emails
     </string>
     <string name="attachment_summary_off">Only download attachments when manually requested</string>
+    <string name="facebook_login_duplicate_error">You already have an account associated with this email using Google, please login using Google and then link your Facebook account for further login</string>
+    <string name="google_login_duplicate_error">You already have an account associated with this email using Facebook, please login using Google and then link your Google account for further login</string>
 </resources>

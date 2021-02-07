@@ -9,17 +9,12 @@
             app:showSeekBarValue="true"
             app:summary="Choose the radius for places around you in km" />
 
-        <EditTextPreference
-            app:key="signature"
-            app:title="@string/signature_title"
+        <PreferenceCategory android:title="Link Facebook Account"
+            app:key="fbLink"
             app:useSimpleSummaryProvider="true" />
-
-        <ListPreference
-            app:defaultValue="reply"
-            app:entries="@array/reply_entries"
-            app:entryValues="@array/reply_values"
-            app:key="reply"
-            app:title="@string/reply_title"
+        <SwitchPreferenceCompat
+            app:key="fbLinking"
+            app:title="Login using Facebook"
             app:useSimpleSummaryProvider="true" />
 
     </PreferenceCategory>

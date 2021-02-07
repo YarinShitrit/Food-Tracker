@@ -8,12 +8,12 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.Marker
 
 class PlaceInfoWindow(
-    val binding: InfoWindowBinding,
+    private val binding: InfoWindowBinding,
     private val mapWrapperLayout: MapWrapperLayout,
     private val callButtonListener: OnInfoWindowElemTouchListener
 ) :
     GoogleMap.InfoWindowAdapter {
-    lateinit var mPlace: Place
+    private lateinit var mPlace: Place
 
     fun setPlace(place: Place) {
         mPlace = place

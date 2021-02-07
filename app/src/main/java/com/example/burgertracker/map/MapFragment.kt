@@ -1,7 +1,6 @@
 package com.example.burgertracker.map
 
 import android.Manifest
-import android.app.Activity
 import android.app.Application
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -68,16 +67,10 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     private lateinit var likeImageButtonClickListener: OnInfoWindowElemTouchListener
     private lateinit var infoWindow: PlaceInfoWindow
 
-    override fun onAttach(activity: Activity) {
-        Log.d(TAG, "onAttach() called")
-        Injector.applicationComponent.inject(this)
-        super.onAttach(activity)
-
-    }
-
     override fun onCreate(p0: Bundle?) {
         super.onCreate(p0)
         Log.d(TAG, "onCreate() called")
+        Injector.applicationComponent.inject(this)
     }
 
     override fun onCreateView(
@@ -236,7 +229,8 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                         "${infoWindowBinding.placeName.text} added to favorites ",
                         Toast.LENGTH_SHORT
                     ).show()
-                    //TODO add/remove the favorite place from the database
+                    Log.d(TAG,"inserting ${mapViewModel.currentFocusedPlace.value!!}")
+                    mapViewModel.addPlaceToFavorites(mapViewModel.currentFocusedPlace.value!!)
                 }
             }
         // MapWrapperLayout initialization
@@ -254,15 +248,13 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             )
         mapViewModel.appMap.value!!.setInfoWindowAdapter(infoWindow)
         infoWindowBinding.like.setOnTouchListener(likeImageButtonClickListener)
-
     }
-
 
     /**
      * Gets the user current location and updates [MapViewModel.userLocation] accordingly
      * @param activity The activity that calls the method, Necessary for [LocationServices.getFusedLocationProviderClient]
      */
-    fun getCurrentLocation(activity: FragmentActivity) {
+    private fun getCurrentLocation(activity: FragmentActivity) {
         Log.d(TAG, "getCurrentLocation called")
         if (ActivityCompat.checkSelfPermission(
                 activity,
@@ -297,9 +289,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                                     TAG,
                                     "Received Location from LocationServices -> Current location is ${it.toLatLng()}"
                                 )
-                                if (it != null) {
-                                    mapViewModel.userLocation.value = it.toLatLng()
-                                }
+                                mapViewModel.userLocation.value = it.toLatLng()
                             }
                         }
                     }
@@ -400,7 +390,6 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                 )
                 true
             }
-
             if (mapViewModel.placesList.value.isNullOrEmpty()) {
                 Log.d(TAG, "calling getNearbyPlaces() from placesList observer")
                 mapViewModel.getNearbyPlaces(null)
@@ -445,7 +434,9 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                 mapViewModel.currentFocusedPlace.value = it
             }
             infoWindow.setPlace(place)
-            //TODO check if the place is in favorites and show the like button as marked
+            // if (mapViewModel.isPlaceInFavorites(place)){
+            //TODO display liked image
+            //   }
             mapViewModel.appMap.value!!.animateCamera(
                 CameraUpdateFactory.newLatLngZoom(
                     LatLng(

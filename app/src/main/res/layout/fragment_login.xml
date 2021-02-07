@@ -19,7 +19,7 @@
     <androidx.cardview.widget.CardView
         android:id="@+id/cardView"
         android:layout_width="325dp"
-        android:layout_height="300dp"
+        android:layout_height="350dp"
         app:cardElevation="10dp"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
@@ -38,6 +38,15 @@
                 android:fontFamily="@font/poppinsbold"
                 android:text="Login"
                 android:textSize="32sp" />
+
+            <com.google.android.material.textview.MaterialTextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="10dp"
+                android:fontFamily="@font/poppinsbold"
+                android:text="Sign in with phone number"
+                android:textSize="14sp" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -65,13 +74,21 @@
 
             </LinearLayout>
 
-
-            <Button
-                android:id="@+id/google_login_btn"
+            <com.google.android.material.textview.MaterialTextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:layout_marginTop="25dp"
+                android:layout_marginTop="10dp"
+                android:fontFamily="@font/poppinsbold"
+                android:text="Social Sign in"
+                android:textSize="14sp" />
+
+            <Button
+                android:id="@+id/google_login_btn"
+                android:layout_width="225dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="10dp"
                 android:background="@drawable/rounded_corners"
                 android:clickable="true"
                 android:drawableStart="@drawable/google_icon"
@@ -79,6 +96,23 @@
                 android:focusable="true"
                 android:padding="8dp"
                 android:text="Sign in with Google"
+                android:textAllCaps="false"
+                android:textColor="@color/GoogleTextColor"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/facebook_login_btn"
+                android:layout_width="225dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="10dp"
+                android:background="@drawable/rounded_corners"
+                android:clickable="true"
+                android:drawableStart="@drawable/fb"
+                android:drawablePadding="8dp"
+                android:focusable="true"
+                android:padding="8dp"
+                android:text="Sign in with Facebook"
                 android:textAllCaps="false"
                 android:textColor="@color/GoogleTextColor"
                 android:textStyle="bold" />

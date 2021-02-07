@@ -21,13 +21,17 @@ interface ApplicationComponent {
     fun inject(fragment: MapFragment)
     fun inject(fragment: LoginFragment)
     fun inject(appRepository: AppRepository)
+
 }
 
 class AppUtils : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        Injector.buildDaggerAppComponent()
+        Injector.applicationComponent =
+            DaggerApplicationComponent.builder()
+                .placesModule(PlacesModule(this))
+                .build()
     }
 
     fun getPixelsFromDp(context: Context, dp: Float): Int {

@@ -10,12 +10,13 @@ import androidx.lifecycle.viewModelScope
 import com.example.burgertracker.AppRepository
 import com.example.burgertracker.R
 import com.example.burgertracker.placesData.Place
+import com.example.burgertracker.user.User
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.auth.FirebaseUser
-import com.squareup.picasso.Picasso
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import javax.inject.Singleton
 
@@ -65,13 +66,25 @@ class MapViewModel(private val appRepository: AppRepository) : ViewModel() {
         }
     }
 
-    /*
-        fun insertPlace(place: Place) =
-            viewModelScope.launch(Dispatchers.IO) { appRepository.insertPlace(place) }
+    fun addPlaceToFavorites(place: Place) {
+        Log.d(TAG, "addPlaceToFavorites() called")
+        viewModelScope.launch(Dispatchers.IO) {
+            appRepository.addPlaceToFavorites(
+                currentUser.value!!.uid,
+                place
+            )
+            Log.d(TAG, "place inserted")
+            val places = appRepository.getAllPlaces()
+            Log.d(
+                TAG,
+                "Added ${place.name} to favorites. \nPlaces in favorites are $places"
+            )
+        }
+    }
 
-        fun deletePlace(place: Place) =
-            viewModelScope.launch(Dispatchers.IO) { appRepository.deletePlace(place) }
-    */
+    fun deletePlace(place: Place) =
+        viewModelScope.launch(Dispatchers.IO) { appRepository.deletePlace(place) }
+
     fun setPlacesMarkerIcon(list: ArrayList<Place>) {
         if (!queryIcon.value.isNullOrEmpty()) {
             list.forEach {
@@ -144,16 +157,28 @@ class MapViewModel(private val appRepository: AppRepository) : ViewModel() {
         }
     }
 
-    fun downloadCurrentUserPhoto() {
+    fun downloadCurrentUserPhoto(fbToken: String? = null) {
         Log.d(
             TAG,
             "downloadCurrentUserPhoto called -> downloading photo from ${currentUser.value?.photoUrl.toString()}"
         )
-        viewModelScope.launch(Dispatchers.IO) {
-            currentUserPhoto.postValue(
-                Picasso.get().load(currentUser.value?.photoUrl).resize(200, 200).get()
-            )
+        try {
+            viewModelScope.launch(Dispatchers.IO) {
+                val photo = async {
+                    appRepository.downloadUserPhoto(currentUser.value!!, fbToken)
+                }
+                currentUserPhoto.postValue(photo.await())
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to download user photo , ${e.printStackTrace()}")
         }
     }
 
+    fun createNewUser(fbToken: String? = null) {
+        val firebaseUser = currentUser.value!!
+        val user = User(firebaseUser.uid, firebaseUser.displayName, firebaseUser.email, fbToken)
+        viewModelScope.launch(Dispatchers.IO) {
+            appRepository.createNewUser(user)
+        }
+    }
 }
