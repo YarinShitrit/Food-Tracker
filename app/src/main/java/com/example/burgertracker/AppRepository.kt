@@ -39,7 +39,7 @@ class AppRepository {
 
     fun downloadUserPhoto(currentUser: FirebaseUser, fbToken: String?): Bitmap {
         return if (fbToken.isNullOrEmpty()) {
-            Picasso.get().load(currentUser.photoUrl).resize(200, 200).get()
+            Picasso.get().load(currentUser.photoUrl).resize(200, 200).centerInside().get()
         } else {
             Picasso.get().load(currentUser.photoUrl.toString() + "?access_token=$fbToken")
                 .resize(200, 200).get()

@@ -2,6 +2,7 @@ package com.example.burgertracker.map
 
 import android.os.Bundle
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.Window
 import android.widget.*
 import androidx.appcompat.app.ActionBarDrawerToggle
@@ -10,6 +11,7 @@ import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.findNavController
+import androidx.viewbinding.ViewBinding
 import com.example.burgertracker.R
 import com.example.burgertracker.dagger.Injector
 import com.example.burgertracker.databinding.MapActivityBinding

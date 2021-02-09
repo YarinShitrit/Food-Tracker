@@ -77,7 +77,7 @@ class MapViewModel(private val appRepository: AppRepository) : ViewModel() {
             val places = appRepository.getAllPlaces()
             Log.d(
                 TAG,
-                "Added ${place.name} to favorites. \nPlaces in favorites are $places"
+                "Added ${place.name} to favorites. \nPlaces in favorites are $places."
             )
         }
     }

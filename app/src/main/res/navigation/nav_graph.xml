@@ -12,8 +12,8 @@
         <action
             android:id="@+id/action_mapFragment_to_settingsFragment"
             app:destination="@id/settings_fragment"
-            app:enterAnim="@anim/fragment_fade_enter"
-            app:exitAnim="@anim/fragment_fade_exit"
+            app:enterAnim="@anim/nav_default_enter_anim"
+            app:exitAnim="@anim/nav_default_exit_anim"
             app:popEnterAnim="@anim/nav_default_pop_enter_anim"
             app:popExitAnim="@anim/nav_default_pop_exit_anim" />
     </fragment>
@@ -25,13 +25,13 @@
         <action
             android:id="@+id/action_loginFragment_to_mapsFragment"
             app:destination="@id/map_fragment"
-            app:enterAnim="@anim/fragment_fade_enter"
-            app:popUpToInclusive="true"
+            app:enterAnim="@anim/nav_default_enter_anim"
+            app:exitAnim="@anim/nav_default_exit_anim"
             app:launchSingleTop="true"
-            app:popUpTo="@id/nav_graph"
-            app:exitAnim="@anim/fragment_fade_exit"
             app:popEnterAnim="@anim/nav_default_pop_enter_anim"
-            app:popExitAnim="@anim/nav_default_pop_exit_anim" />
+            app:popExitAnim="@anim/nav_default_pop_exit_anim"
+            app:popUpToInclusive="true" />
+
     </fragment>
 
     <fragment
@@ -42,16 +42,16 @@
     <action
         android:id="@+id/action_to_mapFragment"
         app:destination="@id/map_fragment"
-        app:enterAnim="@anim/fragment_fade_enter"
-        app:exitAnim="@anim/fragment_fade_exit"
+        app:enterAnim="@anim/nav_default_enter_anim"
+        app:exitAnim="@anim/nav_default_exit_anim"
         app:popEnterAnim="@anim/nav_default_pop_enter_anim"
         app:popExitAnim="@anim/nav_default_pop_exit_anim" />
 
     <action
         android:id="@+id/action_to_loginFragment"
         app:destination="@id/login_fragment"
-        app:enterAnim="@anim/fragment_fade_enter"
-        app:exitAnim="@anim/fragment_fade_exit"
+        app:enterAnim="@anim/nav_default_enter_anim"
+        app:exitAnim="@anim/nav_default_exit_anim"
         app:popEnterAnim="@anim/nav_default_pop_enter_anim"
         app:popExitAnim="@anim/nav_default_pop_exit_anim" />
 
