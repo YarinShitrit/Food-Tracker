@@ -31,5 +31,9 @@ data class Place(
     @Ignore
     var markerIcon: BitmapDescriptor? = null
 
+    @get:Exclude
+    @Ignore
+    var isLiked: Boolean = false
+
 }
 

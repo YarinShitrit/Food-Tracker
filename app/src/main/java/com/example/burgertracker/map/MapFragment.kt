@@ -13,7 +13,6 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
@@ -21,6 +20,7 @@ import androidx.annotation.RequiresApi
 import androidx.appcompat.widget.SearchView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat.checkSelfPermission
+import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.viewModels
@@ -44,6 +44,8 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.material.snackbar.Snackbar
+import com.squareup.picasso.Picasso
+import kotlinx.coroutines.*
 import javax.inject.Inject
 
 
@@ -54,6 +56,7 @@ private const val normalZoom = 14.0F
 class MapFragment : Fragment(), OnMapReadyCallback {
     private var _binding: FragmentMapBinding? = null
     val binding get() = _binding!!
+    private lateinit var infoWindowBinding: InfoWindowBinding
 
     @Inject
     internal lateinit var mapViewModelFactory: MapViewModelFactory
@@ -79,6 +82,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     ): View {
         Log.d(TAG, "onCreateView() called")
         _binding = FragmentMapBinding.inflate(inflater, container, false)
+        infoWindowBinding = InfoWindowBinding.inflate(layoutInflater)
         val mapFragment =
             childFragmentManager.findFragmentById(R.id.map_fragment) as SupportMapFragment?
         mapFragment?.getMapAsync(this)
@@ -118,11 +122,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         if (checkPermissions()) {
             if (mapViewModel.appMap.value != null) {
                 getCurrentLocation(requireActivity())
-                initFoodTypeRecyclerView()
-                initMap()
-                initMarkersOnClick()
-                initObservers()
-                initSearchView()
+                updateUI()
                 if (!mapViewModel.placesList.value.isNullOrEmpty()) {
                     displayPlaces(mapViewModel.placesList.value!!)
                 }
@@ -144,11 +144,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             )
         } else {
             //Permissions Granted
-            initMap()
-            initSearchView()
-            initObservers()
-            initMarkersOnClick()
-            initFoodTypeRecyclerView()
+            updateUI()
             getCurrentLocation(requireActivity())
             if (!mapViewModel.placesList.value.isNullOrEmpty()) {
                 displayPlaces(mapViewModel.placesList.value!!)
@@ -194,6 +190,14 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         checkSelfPermission(requireContext(), it) == PackageManager.PERMISSION_GRANTED
     }
 
+    private fun updateUI() {
+        initMap()
+        initSearchView()
+        initObservers()
+        initMarkersOnClick()
+        initFoodTypeRecyclerView()
+    }
+
     private fun initMap() {
         Log.d(TAG, "initMap called")
         if (ActivityCompat.checkSelfPermission(
@@ -218,19 +222,31 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                 )
             )
         }
-        val infoWindowBinding = InfoWindowBinding.inflate(layoutInflater)
         likeImageButtonClickListener =
             object : OnInfoWindowElemTouchListener(infoWindowBinding.like) {
                 override fun onClickConfirmed(v: View?, marker: Marker?) {
-                    Log.d(TAG, "like clicked")
-                    val likeButton = v as ImageButton
-                    Toast.makeText(
-                        requireContext(),
-                        "${infoWindowBinding.placeName.text} added to favorites ",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                    Log.d(TAG,"inserting ${mapViewModel.currentFocusedPlace.value!!}")
-                    mapViewModel.addPlaceToFavorites(mapViewModel.currentFocusedPlace.value!!)
+                    Log.d(TAG, "like clicked, view is ${infoWindow.hashCode()}")
+                    if (mapViewModel.currentFocusedPlace.value!!.isLiked) {
+                        Log.d(TAG, "place is in favorites - clicked")
+                        Log.d(TAG, "removing ${mapViewModel.currentFocusedPlace.value!!}")
+                        mapViewModel.removePlaceFromFavorites(mapViewModel.currentFocusedPlace.value!!)
+                        Toast.makeText(
+                            requireContext(),
+                            "${infoWindowBinding.placeName.text} removed from favorites ",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        setAddToFavoritesImage()
+                    } else {
+                        Log.d(TAG, "place is in not favorites - clicked")
+                        Log.d(TAG, "adding ${mapViewModel.currentFocusedPlace.value!!}")
+                        mapViewModel.addPlaceToFavorites(mapViewModel.currentFocusedPlace.value!!)
+                        Toast.makeText(
+                            requireContext(),
+                            "${infoWindowBinding.placeName.text} adding to favorites",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        setRemoveFromFavoritesImage()
+                    }
                 }
             }
         // MapWrapperLayout initialization
@@ -247,6 +263,13 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                 likeImageButtonClickListener
             )
         mapViewModel.appMap.value!!.setInfoWindowAdapter(infoWindow)
+        mapViewModel.appMap.value!!.setOnInfoWindowClickListener {
+            Log.d(
+                TAG,
+                "InfoWindow clicked"
+            )
+            Picasso.get().load(R.drawable.cafe).into(infoWindowBinding.like)
+        }
         infoWindowBinding.like.setOnTouchListener(likeImageButtonClickListener)
     }
 
@@ -395,18 +418,17 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                 mapViewModel.getNearbyPlaces(null)
             }
         })
-        mapViewModel.mediator.observe(this, {
+        mapViewModel.mediatorPlacesList.observe(this, {
             Log.d(TAG, "Mediator observer triggered -> calling displayPlaces()")
-            mapViewModel.setPlacesDistance(it)
-            mapViewModel.setPlacesMarkerIcon(it)
             displayPlaces(it)
         })
+        /*
         mapViewModel.placesList.observe(this, {
             if (!it.isNullOrEmpty()) {
                 Log.d(TAG, "placesList observer triggered -> calling displayPlaces()")
                 displayPlaces(it)
             }
-        })
+        })*/
         mapViewModel.currentUserPhoto.observe(this, {
             Log.d(TAG, "currentUserPhoto observer triggered -> displaying photo $it")
             (requireActivity() as MapActivity).binding.navView.getHeaderView(0)
@@ -428,24 +450,75 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     private fun initMarkersOnClick() {
         Log.d(TAG, "enableMarkersOnClick called")
         mapViewModel.appMap.value!!.setOnMarkerClickListener {
-            val place = mapViewModel.placesList.value?.find { place ->
+            val currentFocusedPlace = mapViewModel.placesList.value?.find { place ->
                 LatLng(place.geometry.location.lat, place.geometry.location.lng) == it.position
             }!!.also {
-                mapViewModel.currentFocusedPlace.value = it
+                infoWindow.setPlace(it)
+                Log.d(TAG, "Marker clicked, place is ${it.place_id}")
+                CoroutineScope(Dispatchers.IO).launch {
+                    val ifPlaceIsFavorite = mapViewModel.getIfPlaceIsFavorite(it)
+                    withContext(Dispatchers.Main) {
+                        if (ifPlaceIsFavorite != null) {
+                            Log.d(TAG, "place is in favorites")
+                            setRemoveFromFavoritesImage()
+                            it.isLiked = true
+                        } else {
+                            Log.d(TAG, "place is not in favorites")
+                            setAddToFavoritesImage()
+                        }
+                    }
+                    mapViewModel.currentFocusedPlace.postValue(it)
+                }
             }
-            infoWindow.setPlace(place)
-            // if (mapViewModel.isPlaceInFavorites(place)){
-            //TODO display liked image
-            //   }
             mapViewModel.appMap.value!!.animateCamera(
                 CameraUpdateFactory.newLatLngZoom(
                     LatLng(
-                        place.geometry.location.lat,
-                        place.geometry.location.lng
+                        currentFocusedPlace.geometry.location.lat,
+                        currentFocusedPlace.geometry.location.lng
                     ), mapViewModel.appMap.value!!.cameraPosition.zoom
                 )
             )
             false
+        }
+    }
+
+    private fun setRemoveFromFavoritesImage() {
+        Log.d(TAG, "setEmptyLikeButtonImage() called")
+        with(infoWindowBinding.like) {
+            setImageDrawable(
+                ResourcesCompat.getDrawable(
+                    resources,
+                    R.drawable.ic_remove,
+                    null
+                )
+            )
+            setBackgroundColor(
+                ResourcesCompat.getColor(
+                    resources,
+                    R.color.gmm_white,
+                    null
+                )
+            )
+        }
+    }
+
+    private fun setAddToFavoritesImage() {
+        Log.d(TAG, "setFilledLikeButtonImage() called, infoWindow is ${infoWindow.hashCode()}")
+        with(infoWindowBinding.like) {
+            setImageDrawable(
+                ResourcesCompat.getDrawable(
+                    resources,
+                    R.drawable.ic_add,
+                    null
+                )
+            )
+            setBackgroundColor(
+                ResourcesCompat.getColor(
+                    resources,
+                    R.color.gmm_white,
+                    null
+                )
+            )
         }
     }
 
@@ -460,7 +533,6 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         ) {
             val settingsIntent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
             requireActivity().startActivityForResult(settingsIntent, 1)
-
         }
             .show()
     }

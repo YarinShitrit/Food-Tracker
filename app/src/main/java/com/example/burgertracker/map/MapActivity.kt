@@ -2,7 +2,6 @@ package com.example.burgertracker.map
 
 import android.os.Bundle
 import android.util.Log
-import android.view.LayoutInflater
 import android.view.Window
 import android.widget.*
 import androidx.appcompat.app.ActionBarDrawerToggle
@@ -11,13 +10,13 @@ import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.findNavController
-import androidx.viewbinding.ViewBinding
 import com.example.burgertracker.R
 import com.example.burgertracker.dagger.Injector
 import com.example.burgertracker.databinding.MapActivityBinding
 import com.example.burgertracker.databinding.NavHeaderBinding
 import com.example.burgertracker.login.LoginFragment
 import com.firebase.ui.auth.AuthUI
+import com.google.android.material.shape.ShapeAppearanceModel
 import javax.inject.Inject
 
 private const val TAG = "MapActivity"

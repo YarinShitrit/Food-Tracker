@@ -15,7 +15,7 @@ interface PlaceDao {
     suspend fun getAllPlacesAsync(): List<Place>
 
     @Query("SELECT * FROM places WHERE place_id = :placeID")
-    suspend fun getIfPlaceIsFavorite(placeID: String): Place
+    suspend fun getIfPlaceIsFavorite(placeID: String): Place?
 
     @Delete
     suspend fun deletePlace(placeName: Place)
