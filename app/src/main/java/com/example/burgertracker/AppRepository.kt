@@ -19,11 +19,9 @@ import kotlinx.coroutines.flow.flow
 import retrofit2.Response
 import java.lang.Exception
 import javax.inject.Inject
-import javax.inject.Singleton
 
 private const val TAG = "AppRepository"
 
-@Singleton
 class AppRepository {
     init {
         Injector.applicationComponent.inject(this)
@@ -165,6 +163,7 @@ class AppRepository {
 
     suspend fun getPlace(place: Place) = placesDao.getIfPlaceIsFavorite(place.place_id)
     suspend fun getAllPlaces() = placesDao.getAllPlacesAsync()
+    suspend fun getAllPlacesByDistance() = placesDao.getAllPlacesByDistance()
     suspend fun deleteAllPlaces() = placesDao.deleteAllPlaces()
 
 }

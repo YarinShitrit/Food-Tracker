@@ -1,6 +1,5 @@
 package com.example.burgertracker.login
 
-import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -17,7 +16,6 @@ import com.example.burgertracker.databinding.FragmentLoginBinding
 import com.example.burgertracker.map.MapActivity
 import com.example.burgertracker.map.MapViewModel
 import com.example.burgertracker.map.MapViewModelFactory
-import com.example.burgertracker.user.User
 import com.facebook.AccessToken
 import com.facebook.CallbackManager
 import com.facebook.FacebookCallback

@@ -16,12 +16,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
-import javax.inject.Singleton
-
 
 private const val TAG = "MapViewModel"
 
-@Singleton
 class MapViewModel(private val appRepository: AppRepository) : ViewModel() {
     lateinit var appKey: String
     var isMapAvailable = false // becomes true when onMapReady() is called
@@ -34,6 +31,8 @@ class MapViewModel(private val appRepository: AppRepository) : ViewModel() {
     val mediatorPlacesList = MutableLiveData<ArrayList<Place>>()
     val queryIcon = MutableLiveData<String>()
     val userLocation = MutableLiveData<LatLng>()
+    val favPlaces = MutableLiveData<List<Place>>()
+
     private val searchRadius = 5
 
     init {
@@ -55,17 +54,26 @@ class MapViewModel(private val appRepository: AppRepository) : ViewModel() {
                 searchRadius * 1000
             ).collect {
                 setPlacesDistance(it)
-                MarkerIconGenerator.setPlacesMarkerIcon(it,queryIcon.value)
+                MarkerIconGenerator.setPlacesMarkerIcon(it, queryIcon.value)
                 mediatorPlacesList.postValue(it)
                 val allPlaces =
                     ArrayList<Place>().apply {
                         addAll(placesList.value!!)
                         addAll(it)
                     }
-                Log.d(TAG, "ALLPLACES- $allPlaces")
+                Log.d(TAG, "ALL PLACES- $allPlaces")
                 placesList.postValue(allPlaces)
                 Log.d(TAG, "Total places in placesList - ${placesList.value?.size}")
             }
+        }
+    }
+
+    fun getAllPlacesByDistance() {
+        Log.d(TAG, "getAllPlacesByDistance() called")
+        viewModelScope.launch(Dispatchers.IO) {
+            val places = appRepository.getAllPlacesByDistance()
+            favPlaces.postValue(places)
+
         }
     }
 
@@ -84,7 +92,6 @@ class MapViewModel(private val appRepository: AppRepository) : ViewModel() {
 
     fun deleteAllPlaces() =
         viewModelScope.launch(Dispatchers.IO) { appRepository.deleteAllPlaces() }
-
 
     private fun setPlacesDistance(list: ArrayList<Place>) {
         list.forEach {

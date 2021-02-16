@@ -23,8 +23,6 @@ data class Place(
     var formatted_phone_number: String? = "",
     var imageString: String? = ""
 ) : Serializable {
-    @get:Exclude
-    @Ignore
     var distance: Float? = null
 
     @get:Exclude

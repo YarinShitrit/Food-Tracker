@@ -19,9 +19,6 @@ class PlaceInfoWindow(
     fun setPlace(place: Place) {
         mPlace = place
         binding.placeName.text = place.name
-        binding.addressText.text = place.formatted_address.trim()
-        binding.rating.text = "Rating: ${place.rating}"
-        binding.distanceTextView.text = "${place.distance}km"
     }
 
     override fun getInfoContents(marker: Marker): View {

@@ -4,9 +4,14 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
+import androidx.fragment.app.viewModels
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreferenceCompat
 import com.example.burgertracker.R
+import com.example.burgertracker.dagger.Injector
+import com.example.burgertracker.map.MapActivity
+import com.example.burgertracker.map.MapViewModel
+import com.example.burgertracker.map.MapViewModelFactory
 import com.facebook.CallbackManager
 import com.facebook.FacebookCallback
 import com.facebook.FacebookException
@@ -14,12 +19,23 @@ import com.facebook.login.LoginManager
 import com.facebook.login.LoginResult
 import com.google.firebase.auth.FacebookAuthProvider
 import com.google.firebase.auth.FirebaseAuth
+import javax.inject.Inject
 
 private const val TAG = "SettingsFragment"
 
 class SettingsFragment : PreferenceFragmentCompat() {
+    @Inject
+    internal lateinit var mapViewModelFactory: MapViewModelFactory
+    private val mapViewModel: MapViewModel by viewModels({ activity as MapActivity }) { mapViewModelFactory }
     private lateinit var auth: FirebaseAuth
     private val callbackManager = CallbackManager.Factory.create()
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        Log.d(TAG,"onCreate() called")
+        Injector.applicationComponent.inject(this)
+    }
+
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.root_preferences, rootKey)
         auth = FirebaseAuth.getInstance()
@@ -30,6 +46,12 @@ class SettingsFragment : PreferenceFragmentCompat() {
                 }
                 true
             }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        mapViewModel.currentFragment.value = this::class.java.name
+
     }
 
     private fun linkFacebookAccount() {

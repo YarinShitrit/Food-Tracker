@@ -4,6 +4,7 @@ import androidx.lifecycle.LiveData
 import androidx.room.*
 import com.example.burgertracker.placesData.Place
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.flow.Flow
 
 
 @Dao
@@ -13,6 +14,9 @@ interface PlaceDao {
 
     @Query("SELECT * FROM places")
     suspend fun getAllPlacesAsync(): List<Place>
+
+    @Query("SELECT * FROM places ORDER BY distance ASC")
+    suspend fun getAllPlacesByDistance(): List<Place>
 
     @Query("SELECT * FROM places WHERE place_id = :placeID")
     suspend fun getIfPlaceIsFavorite(placeID: String): Place?

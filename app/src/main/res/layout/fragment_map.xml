@@ -28,6 +28,7 @@
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/food_type_list"
+        tools:listitem="@layout/food_list_item"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 

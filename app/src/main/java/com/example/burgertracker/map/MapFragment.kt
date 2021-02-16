@@ -2,6 +2,7 @@ package com.example.burgertracker.map
 
 import android.Manifest
 import android.app.Application
+import android.app.SharedElementCallback
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
@@ -21,9 +22,12 @@ import androidx.appcompat.widget.SearchView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat.checkSelfPermission
 import androidx.core.content.res.ResourcesCompat
+import androidx.core.view.ViewCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.viewModels
+import androidx.navigation.fragment.FragmentNavigatorExtras
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.burgertracker.AppUtils
@@ -44,7 +48,6 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.material.snackbar.Snackbar
-import com.squareup.picasso.Picasso
 import kotlinx.coroutines.*
 import javax.inject.Inject
 
@@ -67,7 +70,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         Manifest.permission.ACCESS_FINE_LOCATION,
         Manifest.permission.INTERNET
     )
-    private lateinit var likeImageButtonClickListener: OnInfoWindowElemTouchListener
+    private lateinit var infoButtonClickListener: OnInfoWindowElemTouchListener
     private lateinit var infoWindow: PlaceInfoWindow
 
     override fun onCreate(p0: Bundle?) {
@@ -94,7 +97,6 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         super.onViewCreated(view, savedInstanceState)
         Log.d(TAG, "onViewCreated() called")
         mapViewModel.currentFragment.value = this::class.java.name
-        Log.d(TAG, "ViewModel is ${mapViewModel.hashCode()}")
         /**checks if
          * no permissions were granted even after requestPermissions() was called from onMapReady() so the user
          * denied the permissionsRequest and now need to display snackBar
@@ -222,31 +224,14 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                 )
             )
         }
-        likeImageButtonClickListener =
-            object : OnInfoWindowElemTouchListener(infoWindowBinding.like) {
+        infoButtonClickListener =
+            object : OnInfoWindowElemTouchListener(infoWindowBinding.infoButton) {
                 override fun onClickConfirmed(v: View?, marker: Marker?) {
-                    Log.d(TAG, "like clicked, view is ${infoWindow.hashCode()}")
-                    if (mapViewModel.currentFocusedPlace.value!!.isLiked) {
-                        Log.d(TAG, "place is in favorites - clicked")
-                        Log.d(TAG, "removing ${mapViewModel.currentFocusedPlace.value!!}")
-                        mapViewModel.removePlaceFromFavorites(mapViewModel.currentFocusedPlace.value!!)
-                        Toast.makeText(
-                            requireContext(),
-                            "${infoWindowBinding.placeName.text} removed from favorites ",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                        setAddToFavoritesImage()
-                    } else {
-                        Log.d(TAG, "place is in not favorites - clicked")
-                        Log.d(TAG, "adding ${mapViewModel.currentFocusedPlace.value!!}")
-                        mapViewModel.addPlaceToFavorites(mapViewModel.currentFocusedPlace.value!!)
-                        Toast.makeText(
-                            requireContext(),
-                            "${infoWindowBinding.placeName.text} adding to favorites",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                        setRemoveFromFavoritesImage()
-                    }
+                    Log.d(TAG, "info button Clicked")
+                    val extras = FragmentNavigatorExtras(
+                        infoWindowBinding.placeName to "place_transition"
+                    )
+                    findNavController().navigate(R.id.action_mapFragment_to_detailedFragment,null,null,extras)
                 }
             }
         // MapWrapperLayout initialization
@@ -260,17 +245,10 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             PlaceInfoWindow(
                 infoWindowBinding,
                 binding.mapWrapperLayout,
-                likeImageButtonClickListener
+                infoButtonClickListener
             )
         mapViewModel.appMap.value!!.setInfoWindowAdapter(infoWindow)
-        mapViewModel.appMap.value!!.setOnInfoWindowClickListener {
-            Log.d(
-                TAG,
-                "InfoWindow clicked"
-            )
-            Picasso.get().load(R.drawable.cafe).into(infoWindowBinding.like)
-        }
-        infoWindowBinding.like.setOnTouchListener(likeImageButtonClickListener)
+        infoWindowBinding.infoButton.setOnTouchListener(infoButtonClickListener)
     }
 
     /**
@@ -422,13 +400,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             Log.d(TAG, "Mediator observer triggered -> calling displayPlaces()")
             displayPlaces(it)
         })
-        /*
-        mapViewModel.placesList.observe(this, {
-            if (!it.isNullOrEmpty()) {
-                Log.d(TAG, "placesList observer triggered -> calling displayPlaces()")
-                displayPlaces(it)
-            }
-        })*/
+
         mapViewModel.currentUserPhoto.observe(this, {
             Log.d(TAG, "currentUserPhoto observer triggered -> displaying photo $it")
             (requireActivity() as MapActivity).binding.navView.getHeaderView(0)
@@ -460,11 +432,11 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                     withContext(Dispatchers.Main) {
                         if (ifPlaceIsFavorite != null) {
                             Log.d(TAG, "place is in favorites")
-                            setRemoveFromFavoritesImage()
+                            setInFavoriteButtonImage()
                             it.isLiked = true
                         } else {
                             Log.d(TAG, "place is not in favorites")
-                            setAddToFavoritesImage()
+                            setNotInFavoriteButtonImage()
                         }
                     }
                     mapViewModel.currentFocusedPlace.postValue(it)
@@ -482,44 +454,28 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         }
     }
 
-    private fun setRemoveFromFavoritesImage() {
+    private fun setNotInFavoriteButtonImage() {
         Log.d(TAG, "setEmptyLikeButtonImage() called")
-        with(infoWindowBinding.like) {
-            setImageDrawable(
-                ResourcesCompat.getDrawable(
-                    resources,
-                    R.drawable.ic_remove,
-                    null
-                )
+        infoWindowBinding.like.crossfade = 0F
+        infoWindowBinding.like.setBackgroundColor(
+            ResourcesCompat.getColor(
+                resources,
+                R.color.gmm_white,
+                null
             )
-            setBackgroundColor(
-                ResourcesCompat.getColor(
-                    resources,
-                    R.color.gmm_white,
-                    null
-                )
-            )
-        }
+        )
     }
 
-    private fun setAddToFavoritesImage() {
+    private fun setInFavoriteButtonImage() {
         Log.d(TAG, "setFilledLikeButtonImage() called, infoWindow is ${infoWindow.hashCode()}")
-        with(infoWindowBinding.like) {
-            setImageDrawable(
-                ResourcesCompat.getDrawable(
-                    resources,
-                    R.drawable.ic_add,
-                    null
-                )
+        infoWindowBinding.like.crossfade = 1F
+        infoWindowBinding.like.setBackgroundColor(
+            ResourcesCompat.getColor(
+                resources,
+                R.color.gmm_white,
+                null
             )
-            setBackgroundColor(
-                ResourcesCompat.getColor(
-                    resources,
-                    R.color.gmm_white,
-                    null
-                )
-            )
-        }
+        )
     }
 
     private fun showPermissionsSnackBar() {
