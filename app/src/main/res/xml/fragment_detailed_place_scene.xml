@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<MotionScene xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:motion="http://schemas.android.com/apk/res-auto">
+
+    <Transition
+        android:id="@+id/likeButtonTransition"
+        motion:constraintSetEnd="@+id/end"
+        motion:constraintSetStart="@id/start"
+        motion:duration="250">
+        <OnClick motion:targetId="@+id/place_like_button" />
+    </Transition>
+
+    <ConstraintSet android:id="@+id/start">
+        <Constraint android:id="@+id/place_like_button">
+            <CustomAttribute
+                motion:attributeName="crossfade"
+                motion:customFloatValue="0" />
+        </Constraint>
+    </ConstraintSet>
+
+    <ConstraintSet android:id="@+id/end">
+        <Constraint android:id="@+id/place_like_button">
+            <CustomAttribute
+                motion:attributeName="crossfade"
+                motion:customFloatValue="1" />
+        </Constraint>
+    </ConstraintSet>
+</MotionScene>
