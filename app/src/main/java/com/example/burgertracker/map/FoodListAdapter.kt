@@ -4,9 +4,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
 import androidx.recyclerview.widget.RecyclerView
-import com.example.burgertracker.R
 import com.example.burgertracker.databinding.FoodListItemBinding
 
 
@@ -25,13 +23,12 @@ class FoodListAdapter :
         foodItemBinding = FoodListItemBinding.inflate(LayoutInflater.from(parent.context))
         return FoodItemViewHolder(
             foodItemBinding.root
-
         )
     }
 
     override fun onBindViewHolder(holder: FoodItemViewHolder, position: Int) {
         foodItemBinding.foodItemBtn.text = foodList[position]
-        holder.itemView.findViewById<Button>(R.id.food_item_btn).setOnClickListener {
+        foodItemBinding.foodItemBtn.setOnClickListener {
             itemClicked = foodList[position]
             listener.click()
             Log.d("FoodViewHolder", foodList[position])

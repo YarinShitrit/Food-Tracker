@@ -7,13 +7,17 @@ import android.widget.*
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
+import androidx.core.view.isVisible
+import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.findNavController
 import com.example.burgertracker.R
 import com.example.burgertracker.dagger.Injector
 import com.example.burgertracker.databinding.MapActivityBinding
 import com.example.burgertracker.databinding.NavHeaderBinding
+import com.example.burgertracker.favorites.FavoritesFragment
 import com.example.burgertracker.login.LoginFragment
+import com.example.burgertracker.settings.SettingsFragment
 import com.firebase.ui.auth.AuthUI
 import javax.inject.Inject
 
@@ -30,9 +34,9 @@ class MapActivity : AppCompatActivity() {
     private val MapActivityBinding.toggle: ActionBarDrawerToggle by lazy { setToggle() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        Injector.applicationComponent.inject(this)
         Log.d(TAG, "onCreate() called")
         super.onCreate(savedInstanceState)
+        Injector.applicationComponent.inject(this)
         mapViewModel = ViewModelProvider(this, mapViewModelFactory).get(MapViewModel::class.java)
         mapViewModel.appKey = resources.getString(R.string.google_maps_key)
         Log.d(TAG, "ViewModel is ${mapViewModel.hashCode()}")
@@ -112,7 +116,12 @@ class MapActivity : AppCompatActivity() {
                 }
                 R.id.settingsItem -> {
                     Log.d(TAG, " settings item clicked")
-                    findNavController(R.id.nav_host_fragment).navigate(R.id.action_mapFragment_to_settingsFragment)
+                    findNavController(R.id.nav_host_fragment).navigate(R.id.action_to_settingsFragment)
+                    binding.drawerLayout.close()
+                }
+                R.id.favItem -> {
+                    Log.d(TAG, " favorites item clicked")
+                    findNavController(R.id.nav_host_fragment).navigate(R.id.action_to_favoritesFragment)
                     binding.drawerLayout.close()
                 }
             }
@@ -121,11 +130,28 @@ class MapActivity : AppCompatActivity() {
         mapViewModel.currentFragment.observe(this, {
             when (it) {
                 LoginFragment::class.java.name -> {
+                    binding.toolbar.isVisible = false
+                    binding.toolbar.isEnabled = false
                     binding.toggle.isDrawerIndicatorEnabled =
                         false // disables the DrawerMenuButton when LoginFragment is visible
+                    binding.drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)//Locks the drawer menu from being opened
                 }
                 else -> {
+                    when (it) {
+                        MapFragment::class.java.name -> {
+                            binding.navView.setCheckedItem(R.id.mapItem)
+                        }
+                        SettingsFragment::class.java.name -> {
+                            binding.navView.setCheckedItem(R.id.settingsItem)
+                        }
+                        FavoritesFragment::class.java.name -> {
+                            binding.navView.setCheckedItem(R.id.favItem)
+                        }
+                    }
+                    binding.toolbar.isVisible = true
+                    binding.toolbar.isEnabled = true
                     binding.toggle.isDrawerIndicatorEnabled = true
+                    binding.drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED)//Unlocks the drawer menu
                 }
             }
         })

@@ -12,19 +12,20 @@
         app:cardElevation="10dp">
 
         <Button
-            android:backgroundTint="@color/buttonColor"
             android:id="@+id/food_item_btn"
             android:layout_width="100dp"
-            android:layout_height="100dp"
+            android:layout_height="50dp"
+            android:background="@drawable/rounded_corners"
+            android:backgroundTint="@color/colorPrimary"
             android:clickable="true"
             android:focusable="true"
             android:gravity="center"
+            android:padding="4dp"
             android:textAlignment="center"
+            android:textColor="@color/gmm_white"
             android:textSize="16sp"
             android:textStyle="bold"
             tools:text="Food Type" />
-
     </androidx.cardview.widget.CardView>
-
 
 </LinearLayout>

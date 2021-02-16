@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.motion.widget.MotionLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/motion_layout"
+    android:background="@color/gmm_white"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="4dp"
+    app:layoutDescription="@xml/fragment_detailed_place_scene"
+    tools:context=".map.DetailedPlaceFragment">
+
+
+    <androidx.constraintlayout.utils.widget.ImageFilterButton
+        android:id="@+id/place_like_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:backgroundTint="@color/gmm_white"
+        android:background="@color/fui_transparent"
+        android:src="@drawable/ic_favorite_empty_big"
+        app:altSrc="@drawable/ic_favorite_filled_big"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/place_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="Place Name will be here"
+        android:transitionName="place_transition"
+        android:textColor="@color/colorPrimary"
+        android:textSize="20sp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/place_like_button" />
+
+    <TextView
+        android:id="@+id/place_address"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="address will be here"
+        android:textColor="@color/quantum_grey"
+        android:textSize="14sp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/place_name" />
+
+    <TextView
+        android:id="@+id/place_rating"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="30dp"
+        android:text="Rating: 5.0"
+        app:layout_constraintBaseline_toBaselineOf="@id/place_distance"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/place_address" />
+
+    <TextView
+        android:id="@+id/place_distance"
+        android:layout_marginEnd="10dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Distance: 5.0 km"
+        android:layout_marginTop="30dp"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/place_address" />
+
+
+
+</androidx.constraintlayout.motion.widget.MotionLayout>

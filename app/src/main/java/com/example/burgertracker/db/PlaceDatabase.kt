@@ -6,14 +6,14 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.example.burgertracker.placesData.Place
 
-@Database(entities = [Place::class], version = 1)
-abstract class PlaceDataBase : RoomDatabase() {
+@Database(entities = [Place::class], version = 1, exportSchema = false)
+abstract class PlaceDatabase : RoomDatabase() {
 
     abstract fun getPlaceDao(): PlaceDao
 
     companion object {
         @Volatile
-        private var instance: PlaceDataBase? = null
+        private var instance: PlaceDatabase? = null
         private val LOCK = Any()
 
         operator fun invoke(context: Context) = instance ?: synchronized(LOCK) {
@@ -23,6 +23,6 @@ abstract class PlaceDataBase : RoomDatabase() {
         }
 
         private fun buildDatabase(context: Context) =
-            Room.databaseBuilder(context, PlaceDataBase::class.java, "place_database").build()
+            Room.databaseBuilder(context, PlaceDatabase::class.java, "place_database").build()
     }
 }

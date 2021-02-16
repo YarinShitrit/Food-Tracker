@@ -1,8 +1,8 @@
 package com.example.burgertracker.map
 
 import android.Manifest
-import android.app.Activity
 import android.app.Application
+import android.app.SharedElementCallback
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
@@ -14,7 +14,6 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
@@ -22,9 +21,13 @@ import androidx.annotation.RequiresApi
 import androidx.appcompat.widget.SearchView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat.checkSelfPermission
+import androidx.core.content.res.ResourcesCompat
+import androidx.core.view.ViewCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.viewModels
+import androidx.navigation.fragment.FragmentNavigatorExtras
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.burgertracker.AppUtils
@@ -45,6 +48,7 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.*
 import javax.inject.Inject
 
 
@@ -55,6 +59,7 @@ private const val normalZoom = 14.0F
 class MapFragment : Fragment(), OnMapReadyCallback {
     private var _binding: FragmentMapBinding? = null
     val binding get() = _binding!!
+    private lateinit var infoWindowBinding: InfoWindowBinding
 
     @Inject
     internal lateinit var mapViewModelFactory: MapViewModelFactory
@@ -65,19 +70,13 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         Manifest.permission.ACCESS_FINE_LOCATION,
         Manifest.permission.INTERNET
     )
-    private lateinit var likeImageButtonClickListener: OnInfoWindowElemTouchListener
+    private lateinit var infoButtonClickListener: OnInfoWindowElemTouchListener
     private lateinit var infoWindow: PlaceInfoWindow
-
-    override fun onAttach(activity: Activity) {
-        Log.d(TAG, "onAttach() called")
-        Injector.applicationComponent.inject(this)
-        super.onAttach(activity)
-
-    }
 
     override fun onCreate(p0: Bundle?) {
         super.onCreate(p0)
         Log.d(TAG, "onCreate() called")
+        Injector.applicationComponent.inject(this)
     }
 
     override fun onCreateView(
@@ -86,6 +85,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     ): View {
         Log.d(TAG, "onCreateView() called")
         _binding = FragmentMapBinding.inflate(inflater, container, false)
+        infoWindowBinding = InfoWindowBinding.inflate(layoutInflater)
         val mapFragment =
             childFragmentManager.findFragmentById(R.id.map_fragment) as SupportMapFragment?
         mapFragment?.getMapAsync(this)
@@ -97,7 +97,6 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         super.onViewCreated(view, savedInstanceState)
         Log.d(TAG, "onViewCreated() called")
         mapViewModel.currentFragment.value = this::class.java.name
-        Log.d(TAG, "ViewModel is ${mapViewModel.hashCode()}")
         /**checks if
          * no permissions were granted even after requestPermissions() was called from onMapReady() so the user
          * denied the permissionsRequest and now need to display snackBar
@@ -125,11 +124,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         if (checkPermissions()) {
             if (mapViewModel.appMap.value != null) {
                 getCurrentLocation(requireActivity())
-                initFoodTypeRecyclerView()
-                initMap()
-                initMarkersOnClick()
-                initObservers()
-                initSearchView()
+                updateUI()
                 if (!mapViewModel.placesList.value.isNullOrEmpty()) {
                     displayPlaces(mapViewModel.placesList.value!!)
                 }
@@ -151,11 +146,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             )
         } else {
             //Permissions Granted
-            initMap()
-            initSearchView()
-            initObservers()
-            initMarkersOnClick()
-            initFoodTypeRecyclerView()
+            updateUI()
             getCurrentLocation(requireActivity())
             if (!mapViewModel.placesList.value.isNullOrEmpty()) {
                 displayPlaces(mapViewModel.placesList.value!!)
@@ -201,6 +192,14 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         checkSelfPermission(requireContext(), it) == PackageManager.PERMISSION_GRANTED
     }
 
+    private fun updateUI() {
+        initMap()
+        initSearchView()
+        initObservers()
+        initMarkersOnClick()
+        initFoodTypeRecyclerView()
+    }
+
     private fun initMap() {
         Log.d(TAG, "initMap called")
         if (ActivityCompat.checkSelfPermission(
@@ -225,18 +224,14 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                 )
             )
         }
-        val infoWindowBinding = InfoWindowBinding.inflate(layoutInflater)
-        likeImageButtonClickListener =
-            object : OnInfoWindowElemTouchListener(infoWindowBinding.like) {
+        infoButtonClickListener =
+            object : OnInfoWindowElemTouchListener(infoWindowBinding.infoButton) {
                 override fun onClickConfirmed(v: View?, marker: Marker?) {
-                    Log.d(TAG, "like clicked")
-                    val likeButton = v as ImageButton
-                    Toast.makeText(
-                        requireContext(),
-                        "${infoWindowBinding.placeName.text} added to favorites ",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                    //TODO add/remove the favorite place from the database
+                    Log.d(TAG, "info button Clicked")
+                    val extras = FragmentNavigatorExtras(
+                        infoWindowBinding.placeName to "place_transition"
+                    )
+                    findNavController().navigate(R.id.action_mapFragment_to_detailedFragment,null,null,extras)
                 }
             }
         // MapWrapperLayout initialization
@@ -250,19 +245,17 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             PlaceInfoWindow(
                 infoWindowBinding,
                 binding.mapWrapperLayout,
-                likeImageButtonClickListener
+                infoButtonClickListener
             )
         mapViewModel.appMap.value!!.setInfoWindowAdapter(infoWindow)
-        infoWindowBinding.like.setOnTouchListener(likeImageButtonClickListener)
-
+        infoWindowBinding.infoButton.setOnTouchListener(infoButtonClickListener)
     }
-
 
     /**
      * Gets the user current location and updates [MapViewModel.userLocation] accordingly
      * @param activity The activity that calls the method, Necessary for [LocationServices.getFusedLocationProviderClient]
      */
-    fun getCurrentLocation(activity: FragmentActivity) {
+    private fun getCurrentLocation(activity: FragmentActivity) {
         Log.d(TAG, "getCurrentLocation called")
         if (ActivityCompat.checkSelfPermission(
                 activity,
@@ -297,9 +290,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                                     TAG,
                                     "Received Location from LocationServices -> Current location is ${it.toLatLng()}"
                                 )
-                                if (it != null) {
-                                    mapViewModel.userLocation.value = it.toLatLng()
-                                }
+                                mapViewModel.userLocation.value = it.toLatLng()
                             }
                         }
                     }
@@ -400,24 +391,16 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                 )
                 true
             }
-
             if (mapViewModel.placesList.value.isNullOrEmpty()) {
                 Log.d(TAG, "calling getNearbyPlaces() from placesList observer")
                 mapViewModel.getNearbyPlaces(null)
             }
         })
-        mapViewModel.mediator.observe(this, {
+        mapViewModel.mediatorPlacesList.observe(this, {
             Log.d(TAG, "Mediator observer triggered -> calling displayPlaces()")
-            mapViewModel.setPlacesDistance(it)
-            mapViewModel.setPlacesMarkerIcon(it)
             displayPlaces(it)
         })
-        mapViewModel.placesList.observe(this, {
-            if (!it.isNullOrEmpty()) {
-                Log.d(TAG, "placesList observer triggered -> calling displayPlaces()")
-                displayPlaces(it)
-            }
-        })
+
         mapViewModel.currentUserPhoto.observe(this, {
             Log.d(TAG, "currentUserPhoto observer triggered -> displaying photo $it")
             (requireActivity() as MapActivity).binding.navView.getHeaderView(0)
@@ -439,23 +422,60 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     private fun initMarkersOnClick() {
         Log.d(TAG, "enableMarkersOnClick called")
         mapViewModel.appMap.value!!.setOnMarkerClickListener {
-            val place = mapViewModel.placesList.value?.find { place ->
+            val currentFocusedPlace = mapViewModel.placesList.value?.find { place ->
                 LatLng(place.geometry.location.lat, place.geometry.location.lng) == it.position
             }!!.also {
-                mapViewModel.currentFocusedPlace.value = it
+                infoWindow.setPlace(it)
+                Log.d(TAG, "Marker clicked, place is ${it.place_id}")
+                CoroutineScope(Dispatchers.IO).launch {
+                    val ifPlaceIsFavorite = mapViewModel.getIfPlaceIsFavorite(it)
+                    withContext(Dispatchers.Main) {
+                        if (ifPlaceIsFavorite != null) {
+                            Log.d(TAG, "place is in favorites")
+                            setInFavoriteButtonImage()
+                            it.isLiked = true
+                        } else {
+                            Log.d(TAG, "place is not in favorites")
+                            setNotInFavoriteButtonImage()
+                        }
+                    }
+                    mapViewModel.currentFocusedPlace.postValue(it)
+                }
             }
-            infoWindow.setPlace(place)
-            //TODO check if the place is in favorites and show the like button as marked
             mapViewModel.appMap.value!!.animateCamera(
                 CameraUpdateFactory.newLatLngZoom(
                     LatLng(
-                        place.geometry.location.lat,
-                        place.geometry.location.lng
+                        currentFocusedPlace.geometry.location.lat,
+                        currentFocusedPlace.geometry.location.lng
                     ), mapViewModel.appMap.value!!.cameraPosition.zoom
                 )
             )
             false
         }
+    }
+
+    private fun setNotInFavoriteButtonImage() {
+        Log.d(TAG, "setEmptyLikeButtonImage() called")
+        infoWindowBinding.like.crossfade = 0F
+        infoWindowBinding.like.setBackgroundColor(
+            ResourcesCompat.getColor(
+                resources,
+                R.color.gmm_white,
+                null
+            )
+        )
+    }
+
+    private fun setInFavoriteButtonImage() {
+        Log.d(TAG, "setFilledLikeButtonImage() called, infoWindow is ${infoWindow.hashCode()}")
+        infoWindowBinding.like.crossfade = 1F
+        infoWindowBinding.like.setBackgroundColor(
+            ResourcesCompat.getColor(
+                resources,
+                R.color.gmm_white,
+                null
+            )
+        )
     }
 
     private fun showPermissionsSnackBar() {
@@ -469,7 +489,6 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         ) {
             val settingsIntent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
             requireActivity().startActivityForResult(settingsIntent, 1)
-
         }
             .show()
     }

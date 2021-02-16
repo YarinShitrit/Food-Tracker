@@ -6,9 +6,12 @@ import android.location.Location
 import com.example.burgertracker.dagger.Injector
 import com.example.burgertracker.dagger.NetworkModule
 import com.example.burgertracker.dagger.PlacesModule
+import com.example.burgertracker.favorites.FavoritesFragment
 import com.example.burgertracker.login.LoginFragment
+import com.example.burgertracker.map.DetailedPlaceFragment
 import com.example.burgertracker.map.MapActivity
 import com.example.burgertracker.map.MapFragment
+import com.example.burgertracker.settings.SettingsFragment
 import com.google.android.gms.maps.model.LatLng
 import dagger.Component
 import javax.inject.Singleton
@@ -20,14 +23,21 @@ interface ApplicationComponent {
     fun inject(activity: MapActivity)
     fun inject(fragment: MapFragment)
     fun inject(fragment: LoginFragment)
+    fun inject(fragment: DetailedPlaceFragment)
+    fun inject(fragment: FavoritesFragment)
+    fun inject(fragment: SettingsFragment)
     fun inject(appRepository: AppRepository)
+
 }
 
 class AppUtils : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        Injector.buildDaggerAppComponent()
+        Injector.applicationComponent =
+            DaggerApplicationComponent.builder()
+                .placesModule(PlacesModule(this))
+                .build()
     }
 
     fun getPixelsFromDp(context: Context, dp: Float): Int {
