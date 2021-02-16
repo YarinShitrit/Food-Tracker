@@ -2,7 +2,6 @@ package com.example.burgertracker.map
 
 import android.Manifest
 import android.app.Application
-import android.app.SharedElementCallback
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
@@ -16,13 +15,11 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
-import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.widget.SearchView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat.checkSelfPermission
 import androidx.core.content.res.ResourcesCompat
-import androidx.core.view.ViewCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.viewModels
@@ -72,6 +69,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     )
     private lateinit var infoButtonClickListener: OnInfoWindowElemTouchListener
     private lateinit var infoWindow: PlaceInfoWindow
+    private var gpsSnackBar: Snackbar? = null
 
     override fun onCreate(p0: Bundle?) {
         super.onCreate(p0)
@@ -231,7 +229,12 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                     val extras = FragmentNavigatorExtras(
                         infoWindowBinding.placeName to "place_transition"
                     )
-                    findNavController().navigate(R.id.action_mapFragment_to_detailedFragment,null,null,extras)
+                    findNavController().navigate(
+                        R.id.action_mapFragment_to_detailedFragment,
+                        null,
+                        null,
+                        extras
+                    )
                 }
             }
         // MapWrapperLayout initialization
@@ -269,37 +272,96 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         ) {
             try {
                 //Try to get location from LocationManager
-                val nManager =
+                val locationManager =
                     activity.getSystemService(Application.LOCATION_SERVICE) as LocationManager
-                if (nManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-                    val locationGPS: Location? =
-                        nManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
-                    if (locationGPS != null) {
-                        Log.d(
-                            TAG,
-                            "Received location from LocationManager -> Current location is ${locationGPS.toLatLng()}"
-                        )
-                        mapViewModel.userLocation.value = locationGPS.toLatLng()
-                    } else {
-                        //Try to get location from LocationServices
-                        val currentLocationTask =
-                            LocationServices.getFusedLocationProviderClient(activity).lastLocation
-                        currentLocationTask.addOnSuccessListener(activity) {
-                            if (currentLocationTask.isSuccessful) {
+                if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                    //Try to get location from LocationServices
+                    val currentLocationTask =
+                        LocationServices.getFusedLocationProviderClient(requireContext()).lastLocation
+                    currentLocationTask.addOnSuccessListener { location: Location? ->
+                        if (location != null) {
+                            Log.d(
+                                TAG,
+                                "Received Location from LocationServices -> Current location is ${location.toLatLng()}"
+                            )
+                            gpsSnackBar?.setText("Connected!")
+                            mapViewModel.userLocation.value = location.toLatLng()
+                        } else {
+                            val locationGPS: Location? =
+                                locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+                            if (locationGPS != null) {
                                 Log.d(
                                     TAG,
-                                    "Received Location from LocationServices -> Current location is ${it.toLatLng()}"
+                                    "Received location from LocationManager -> Current location is ${locationGPS.toLatLng()}"
                                 )
-                                mapViewModel.userLocation.value = it.toLatLng()
+                                gpsSnackBar?.setText("Connected!")
+                                mapViewModel.userLocation.value = locationGPS.toLatLng()
+                            } else {
+                                Log.d(TAG, "Unable to get current location")
+                                if (gpsSnackBar != null) {
+                                    gpsSnackBar?.setText("Unable to get location, Retrying to connect...")
+                                        ?.show()
+                                } else {
+                                    gpsSnackBar = Snackbar.make(
+                                        binding.root,
+                                        "Unable to get location, Retrying to connect...",
+                                        Snackbar.LENGTH_LONG
+                                    ).apply {
+                                        setBackgroundTint(
+                                            ResourcesCompat.getColor(
+                                                resources,
+                                                R.color.colorPrimary,
+                                                null
+                                            )
+                                        )
+
+                                        show()
+                                    }
+                                }
+                                CoroutineScope(Dispatchers.IO).launch {
+                                    delay(2000)
+                                    withContext(Dispatchers.Main) {
+                                        getCurrentLocation(activity)
+                                    }
+                                }
                             }
                         }
                     }
                 } else {
                     Log.d(TAG, "GPS not available")
-                    Toast.makeText(activity, "Turn on GPS", Toast.LENGTH_SHORT).show()
+                    if (gpsSnackBar != null) {
+                        gpsSnackBar?.setText("GPS is not available")?.show()
+                    } else {
+                        gpsSnackBar = Snackbar.make(
+                            binding.root,
+                            "GPS is not available",
+                            Snackbar.LENGTH_LONG
+                        ).apply {
+                            setBackgroundTint(
+                                ResourcesCompat.getColor(
+                                    resources,
+                                    R.color.colorPrimary,
+                                    null
+                                )
+                            )
+                            show()
+                        }
+                    }
+                    CoroutineScope(Dispatchers.IO).launch {
+                        delay(2000)
+                        withContext(Dispatchers.Main) {
+                            getCurrentLocation(activity)
+                        }
+                    }
                 }
             } catch (e: Exception) {
                 Log.d(TAG, "Could not receive current location -> ${e.localizedMessage}")
+                CoroutineScope(Dispatchers.IO).launch {
+                    delay(2000)
+                    withContext(Dispatchers.Main) {
+                        getCurrentLocation(activity)
+                    }
+                }
             }
         }
     }
@@ -410,7 +472,10 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
         mapViewModel.currentUser.observe(this, {
             if (it != null) {
-                Log.d(TAG, "currentUser observer triggered -> displaying user ${it.displayName}")
+                Log.d(
+                    TAG,
+                    "currentUser observer triggered -> displaying user ${it.displayName}"
+                )
                 (requireActivity() as MapActivity).binding.navView.getHeaderView(0)
                     .findViewById<TextView>(R.id.userName).text = it.displayName
                 (requireActivity() as MapActivity).binding.navView.getHeaderView(0)
