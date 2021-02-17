@@ -1,6 +1,7 @@
 package com.example.burgertracker.map
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Application
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -57,6 +58,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     private var _binding: FragmentMapBinding? = null
     val binding get() = _binding!!
     private lateinit var infoWindowBinding: InfoWindowBinding
+    private val gpsIOScope: CoroutineScope by lazy { CoroutineScope(Dispatchers.IO) }
 
     @Inject
     internal lateinit var mapViewModelFactory: MapViewModelFactory
@@ -198,6 +200,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         initFoodTypeRecyclerView()
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     private fun initMap() {
         Log.d(TAG, "initMap called")
         if (ActivityCompat.checkSelfPermission(
@@ -314,11 +317,10 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                                                 null
                                             )
                                         )
-
                                         show()
                                     }
                                 }
-                                CoroutineScope(Dispatchers.IO).launch {
+                                gpsIOScope.launch {
                                     delay(2000)
                                     withContext(Dispatchers.Main) {
                                         getCurrentLocation(activity)
@@ -347,7 +349,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                             show()
                         }
                     }
-                    CoroutineScope(Dispatchers.IO).launch {
+                    gpsIOScope.launch {
                         delay(2000)
                         withContext(Dispatchers.Main) {
                             getCurrentLocation(activity)
@@ -356,7 +358,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                 }
             } catch (e: Exception) {
                 Log.d(TAG, "Could not receive current location -> ${e.localizedMessage}")
-                CoroutineScope(Dispatchers.IO).launch {
+                gpsIOScope.launch {
                     delay(2000)
                     withContext(Dispatchers.Main) {
                         getCurrentLocation(activity)

@@ -7,9 +7,12 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
+import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.burgertracker.R
 import com.example.burgertracker.dagger.Injector
 import com.example.burgertracker.databinding.FragmentFavoritesBinding
 import com.example.burgertracker.map.MapActivity
@@ -80,7 +83,24 @@ class FavoritesFragment : Fragment() {
         mapViewModel.getAllPlacesByDistance()
         binding.delAllButton.setOnClickListener {
             if (!mapViewModel.favPlaces.value.isNullOrEmpty()) {
-                mapViewModel.deleteAllPlaces()
+                Log.d(TAG, mapViewModel.favPlaces.value.toString())
+                AlertDialog.Builder(requireContext())
+                    .setTitle("Delete all favorites?").setIcon(
+                        ResourcesCompat.getDrawable(
+                            resources,
+                            R.drawable.ic_baseline_delete_24,
+                            null
+                        )
+                    )
+                    .setPositiveButton(
+                        "Delete"
+                    ) { _, _ ->
+                        mapViewModel.deleteAllPlaces()
+                    }
+                    .setNegativeButton("Cancel") { dialog, _ -> dialog.cancel() }
+                    .show()
+            } else {
+                Toast.makeText(requireContext(), "List is empty", Toast.LENGTH_SHORT).show()
             }
         }
     }

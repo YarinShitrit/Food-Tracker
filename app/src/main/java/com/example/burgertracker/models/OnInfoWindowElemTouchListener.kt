@@ -1,6 +1,7 @@
 package com.example.burgertracker.models
 
 import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
@@ -12,7 +13,7 @@ abstract class OnInfoWindowElemTouchListener(
     private val view: View
 ) :
     OnTouchListener {
-    private val handler = Handler()
+    private val handler = Handler(Looper.myLooper()!!)
     private var marker: Marker? = null
     fun setMarker(marker: Marker?) {
         this.marker = marker

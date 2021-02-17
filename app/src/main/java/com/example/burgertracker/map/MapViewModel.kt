@@ -31,7 +31,7 @@ class MapViewModel(private val appRepository: AppRepository) : ViewModel() {
     val mediatorPlacesList = MutableLiveData<ArrayList<Place>>()
     val queryIcon = MutableLiveData<String>()
     val userLocation = MutableLiveData<LatLng>()
-    val favPlaces = MutableLiveData<List<Place>>()
+    val favPlaces = MutableLiveData<ArrayList<Place>>()
 
     private val searchRadius = 5
 
@@ -52,7 +52,7 @@ class MapViewModel(private val appRepository: AppRepository) : ViewModel() {
                 userLocation.value!!,
                 appKey,
                 searchRadius * 1000
-            ).collect { it ->
+            ).collect {
                 setPlacesDistance(it)
                 MarkerIconGenerator.setPlacesMarkerIcon(it, queryIcon.value)
                 mediatorPlacesList.postValue(it)
@@ -72,8 +72,7 @@ class MapViewModel(private val appRepository: AppRepository) : ViewModel() {
         Log.d(TAG, "getAllPlacesByDistance() called")
         viewModelScope.launch(Dispatchers.IO) {
             val places = appRepository.getAllPlacesByDistance()
-            favPlaces.postValue(places)
-
+            favPlaces.postValue(ArrayList(places))
         }
     }
 
@@ -85,6 +84,7 @@ class MapViewModel(private val appRepository: AppRepository) : ViewModel() {
     fun removePlaceFromFavorites(place: Place) = viewModelScope.launch(Dispatchers.IO) {
         placesList.value?.find { (it.place_id == place.place_id) }
             .apply { this?.isLiked = false }
+        favPlaces.value?.remove(place)
         appRepository.removePlaceFromFavorites(currentUser.value!!.uid, place)
     }
 
@@ -92,7 +92,7 @@ class MapViewModel(private val appRepository: AppRepository) : ViewModel() {
 
     fun deleteAllPlaces() {
         viewModelScope.launch(Dispatchers.IO) { appRepository.deleteAllPlaces(currentUser.value!!.uid) }
-        favPlaces.value = listOf<Place>()
+        favPlaces.postValue(ArrayList())
     }
 
     private fun setPlacesDistance(list: ArrayList<Place>) {

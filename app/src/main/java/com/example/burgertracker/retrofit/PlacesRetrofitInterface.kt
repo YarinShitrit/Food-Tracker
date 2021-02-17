@@ -12,7 +12,7 @@ interface PlacesRetrofitInterface {
      * Call Places API and get nearby places in JSON format
      * @param query String - The query search
      * @param types String - The type of places to search e.g restaurant, airport, etc..
-     * @param location String - the [LatLng] of the location displayed like the following - latitude , longitude
+     * @param location String - the LatLng of the location displayed like the following - latitude , longitude
      * @param radius Int - The radius for searching places in meters
      * @param key String - The Places API key
      */
@@ -28,7 +28,7 @@ interface PlacesRetrofitInterface {
     /**
      * Call Places API and get nearby places in JSON format without query
      * @param types String - The type of places to search e.g restaurant, airport, etc..
-     * @param location String - the [LatLng] of the location displayed like the following - latitude , longitude
+     * @param location String - the LatLng of the location displayed like the following - latitude , longitude
      * @param radius Int - The radius for searching places in meters
      * @param key String - The Places API key
      */
