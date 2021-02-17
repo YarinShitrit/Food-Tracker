@@ -52,7 +52,7 @@ class MapViewModel(private val appRepository: AppRepository) : ViewModel() {
                 userLocation.value!!,
                 appKey,
                 searchRadius * 1000
-            ).collect {
+            ).collect { it ->
                 setPlacesDistance(it)
                 MarkerIconGenerator.setPlacesMarkerIcon(it, queryIcon.value)
                 mediatorPlacesList.postValue(it)
@@ -90,8 +90,10 @@ class MapViewModel(private val appRepository: AppRepository) : ViewModel() {
 
     suspend fun getIfPlaceIsFavorite(place: Place) = appRepository.getPlace(place)
 
-    fun deleteAllPlaces() =
-        viewModelScope.launch(Dispatchers.IO) { appRepository.deleteAllPlaces() }
+    fun deleteAllPlaces() {
+        viewModelScope.launch(Dispatchers.IO) { appRepository.deleteAllPlaces(currentUser.value!!.uid) }
+        favPlaces.value = listOf<Place>()
+    }
 
     private fun setPlacesDistance(list: ArrayList<Place>) {
         list.forEach {

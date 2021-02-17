@@ -20,7 +20,7 @@ class FavListAdapter :
     private lateinit var favClickListener: FavoriteItemClickListener
     private var placesList: ArrayList<Place>? = null
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FavoriteViewHolder {
-        binding = FavListItemBinding.inflate(LayoutInflater.from(parent.context))
+        binding = FavListItemBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         return FavoriteViewHolder(binding.root)
     }
 
@@ -29,7 +29,8 @@ class FavListAdapter :
         binding.placeDistance.text = "Distance: ${placesList!![position].distance}km"
         binding.delButton.setOnClickListener {
             Log.d(TAG, "list is $placesList")
-            Log.d(TAG,"POSITION IS $position")
+            Log.d(TAG, "POSITION IS $position")
+            Log.d(TAG, "holder position is ${holder.adapterPosition}")
             favClickListener.onClick(placesList!![holder.adapterPosition], holder.adapterPosition)
         }
     }
@@ -46,11 +47,12 @@ class FavListAdapter :
     }
 
     fun deletePlace(position: Int) {
-        Log.d(TAG,"list before remove is $placesList")
+        Log.d(TAG, "list before remove is $placesList")
+        Log.d(TAG, "position remove is $position")
         placesList!!.removeAt(position)
-        notifyItemRemoved(position)
-        notifyDataSetChanged()
-        Log.d(TAG,"list after remove is $placesList")
+        notifyItemChanged(position)
+        notifyItemRangeRemoved(position, 1)
+        Log.d(TAG, "list after remove is $placesList")
     }
 
     fun setData(it: List<Place>?) {

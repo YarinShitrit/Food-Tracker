@@ -78,5 +78,10 @@ class FavoritesFragment : Fragment() {
             (binding.favoritesRecyclerView.adapter as FavListAdapter).setData(it)
         })
         mapViewModel.getAllPlacesByDistance()
+        binding.delAllButton.setOnClickListener {
+            if (!mapViewModel.favPlaces.value.isNullOrEmpty()) {
+                mapViewModel.deleteAllPlaces()
+            }
+        }
     }
 }

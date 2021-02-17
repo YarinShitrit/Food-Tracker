@@ -164,6 +164,15 @@ class AppRepository {
     suspend fun getPlace(place: Place) = placesDao.getIfPlaceIsFavorite(place.place_id)
     suspend fun getAllPlaces() = placesDao.getAllPlacesAsync()
     suspend fun getAllPlacesByDistance() = placesDao.getAllPlacesByDistance()
-    suspend fun deleteAllPlaces() = placesDao.deleteAllPlaces()
-
+    suspend fun deleteAllPlaces(userID: String) {
+        firebaseDBRef.child("users").child(userID).child("favorite_places")
+            .removeValue().addOnCompleteListener {
+                if (it.isSuccessful) {
+                    Log.d(TAG, "Successfully removed all places from firebase database")
+                } else {
+                    Log.d(TAG, "Failed to remove all places from firebase database")
+                }
+            }
+        placesDao.deleteAllPlaces()
+    }
 }
