@@ -1,10 +1,8 @@
 package com.example.burgertracker.db
 
-import androidx.lifecycle.LiveData
+
 import androidx.room.*
 import com.example.burgertracker.placesData.Place
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.flow.Flow
 
 
 @Dao
@@ -21,8 +19,14 @@ interface PlaceDao {
     @Query("SELECT * FROM places WHERE place_id = :placeID")
     suspend fun getIfPlaceIsFavorite(placeID: String): Place?
 
-    @Delete
-    suspend fun deletePlace(placeName: Place)
+    @Query("SELECT * FROM places WHERE place_id = :placeID")
+    suspend fun getPlaceFavorites(placeID: String): Place?
+
+    @Query("UPDATE places SET totalFavorites = :totalFavorites WHERE place_id =:placeID")
+    suspend fun updateTotalFavorites(placeID: String, totalFavorites: Long)
+
+    @Query("DELETE FROM places WHERE place_id =:placeID")
+    suspend fun deletePlace(placeID: String)
 
     @Query("DELETE FROM places")
     suspend fun deleteAllPlaces()

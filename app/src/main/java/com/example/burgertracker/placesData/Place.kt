@@ -1,13 +1,14 @@
 package com.example.burgertracker.placesData
 
 
+import android.util.Log
+import androidx.lifecycle.MutableLiveData
 import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.Ignore
 import androidx.room.PrimaryKey
 import com.google.android.gms.maps.model.BitmapDescriptor
-import com.google.firebase.database.Exclude
-import com.google.firebase.database.IgnoreExtraProperties
+import com.google.firebase.database.*
 import java.io.Serializable
 
 @IgnoreExtraProperties
@@ -24,6 +25,7 @@ data class Place(
     var imageString: String? = ""
 ) : Serializable {
     var distance: Float? = null
+    var totalFavorites: Long = 0L
 
     @get:Exclude
     @Ignore

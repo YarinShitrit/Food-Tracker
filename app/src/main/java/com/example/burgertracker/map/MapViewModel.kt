@@ -11,9 +11,15 @@ import com.example.burgertracker.placesData.Place
 import com.example.burgertracker.user.User
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.database.ChildEventListener
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
@@ -24,6 +30,7 @@ class MapViewModel(private val appRepository: AppRepository) : ViewModel() {
     var isMapAvailable = false // becomes true when onMapReady() is called
     val appMap = MutableLiveData<GoogleMap>()
     val currentUser = MutableLiveData<FirebaseUser?>()
+    private val currentUserID: String by lazy { currentUser.value!!.uid }
     val currentUserPhoto = MutableLiveData<Bitmap>()
     val currentFragment = MutableLiveData<String>()
     val currentFocusedPlace = MutableLiveData<Place>()
@@ -32,11 +39,67 @@ class MapViewModel(private val appRepository: AppRepository) : ViewModel() {
     val queryIcon = MutableLiveData<String>()
     val userLocation = MutableLiveData<LatLng>()
     val favPlaces = MutableLiveData<ArrayList<Place>>()
-
+    private val fcmToken = MutableLiveData<String>()
     private val searchRadius = 5
 
     init {
         placesList.value = arrayListOf()
+    }
+
+    private fun initFirebaseCloudMessaging() {
+        FirebaseMessaging.getInstance().token.addOnCompleteListener(OnCompleteListener { task ->
+            if (!task.isSuccessful) {
+                Log.w(TAG, "Fetching FCM registration token failed", task.exception)
+                return@OnCompleteListener
+            }
+            Log.d(TAG, "Received Firebase token -> ${task.result}")
+            // Get new FCM registration token
+            fcmToken.value = task.result
+            appRepository.setUserFCMToken(currentUserID, fcmToken.value!!)
+        })
+    }
+
+    private fun initUserFirebaseDBListener() {
+        appRepository.firebaseDBRef.child("users").child(currentUserID).child("favorite_places")
+            .addChildEventListener(object : ChildEventListener {
+                override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
+                    Log.d(
+                        TAG,
+                        "onChildAdded() called -> Adding place to Room DB: ${snapshot.value}"
+                    )
+                    viewModelScope.launch(Dispatchers.IO) {
+                        val place =
+                            placesList.value!!.find { it.place_id == (snapshot.value as HashMap<*, *>)["place_id"] }
+                        if (place != null) {
+                            Log.d(TAG, "Adding $place")
+                            appRepository.placesDao.insertPlace(place)
+                        }
+                    }
+                }
+
+                override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {
+                    Log.d(TAG, "onChildChanged() called -> ${snapshot.value}")
+                }
+
+                override fun onChildRemoved(snapshot: DataSnapshot) {
+                    Log.d(
+                        TAG,
+                        "onChildRemoved() called -> Removing place from Room DB: ${snapshot.value}"
+                    )
+                    viewModelScope.launch(Dispatchers.IO) {
+                        val placeID = (snapshot.value as HashMap<*, *>)["place_id"] as String
+                        appRepository.placesDao.deletePlace(placeID)
+                    }
+                }
+
+                override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {
+                    Log.d(TAG, "onChildMoved() called")
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    Log.d(TAG, "onChildCancelled() called")
+                }
+            })
     }
 
     /**
@@ -61,8 +124,8 @@ class MapViewModel(private val appRepository: AppRepository) : ViewModel() {
                         addAll(placesList.value!!)
                         addAll(it)
                     }
-                Log.d(TAG, "ALL PLACES- $allPlaces")
                 placesList.postValue(allPlaces)
+                delay(50)
                 Log.d(TAG, "Total places in placesList - ${placesList.value?.size}")
             }
         }
@@ -78,21 +141,23 @@ class MapViewModel(private val appRepository: AppRepository) : ViewModel() {
 
     fun addPlaceToFavorites(place: Place) = viewModelScope.launch(Dispatchers.IO) {
         placesList.value?.find { (it.place_id == place.place_id) }.apply { this?.isLiked = true }
-        appRepository.addPlaceToFavorites(currentUser.value!!.uid, place)
+        appRepository.addPlaceToFavorites(currentUserID, place)
     }
 
     fun removePlaceFromFavorites(place: Place) = viewModelScope.launch(Dispatchers.IO) {
         placesList.value?.find { (it.place_id == place.place_id) }
             .apply { this?.isLiked = false }
         favPlaces.value?.remove(place)
-        appRepository.removePlaceFromFavorites(currentUser.value!!.uid, place)
+        appRepository.deletePlaceFromFavorites(currentUserID, place.place_id)
     }
 
     suspend fun getIfPlaceIsFavorite(place: Place) = appRepository.getPlace(place)
 
     fun deleteAllPlaces() {
-        viewModelScope.launch(Dispatchers.IO) { appRepository.deleteAllPlaces(currentUser.value!!.uid) }
-        favPlaces.postValue(ArrayList())
+        viewModelScope.launch(Dispatchers.IO) {
+            appRepository.deleteAllPlaces(currentUserID)
+            favPlaces.postValue(ArrayList())
+        }
     }
 
     private fun setPlacesDistance(list: ArrayList<Place>) {
@@ -116,7 +181,14 @@ class MapViewModel(private val appRepository: AppRepository) : ViewModel() {
         }
     }
 
-    fun downloadCurrentUserPhoto(fbToken: String? = null) {
+    fun initUserData(user: FirebaseUser, fbToken: String? = null) {
+        currentUser.value = user
+        downloadCurrentUserPhoto(fbToken)
+        initUserFirebaseDBListener()
+        initFirebaseCloudMessaging()
+    }
+
+    private fun downloadCurrentUserPhoto(fbToken: String? = null) {
         Log.d(
             TAG,
             "downloadCurrentUserPhoto called -> downloading photo from ${currentUser.value?.photoUrl.toString()}"
@@ -139,5 +211,21 @@ class MapViewModel(private val appRepository: AppRepository) : ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             appRepository.createNewUser(user)
         }
+    }
+
+    fun addUserToPlaceCloudUpdates() {
+        Log.d(TAG, "addUserToPlaceCloudUpdates() called")
+        appRepository.addUserToPlaceCloudUpdates(
+            currentUserID,
+            currentFocusedPlace.value!!.place_id
+        )
+    }
+
+    fun removeUserFromPlaceCloudUpdates() {
+        Log.d(TAG, "removeUserFromPlaceCloudUpdates() called")
+        appRepository.removeUserFromPlaceCloudUpdates(
+            currentUserID,
+            currentFocusedPlace.value!!.place_id
+        )
     }
 }

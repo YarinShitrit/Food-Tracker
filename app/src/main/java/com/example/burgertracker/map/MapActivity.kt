@@ -2,6 +2,7 @@ package com.example.burgertracker.map
 
 import android.os.Bundle
 import android.util.Log
+import android.view.Menu
 import android.view.Window
 import android.widget.*
 import androidx.appcompat.app.ActionBarDrawerToggle
@@ -19,6 +20,7 @@ import com.example.burgertracker.favorites.FavoritesFragment
 import com.example.burgertracker.login.LoginFragment
 import com.example.burgertracker.settings.SettingsFragment
 import com.firebase.ui.auth.AuthUI
+import com.google.android.gms.common.GoogleApiAvailability
 import javax.inject.Inject
 
 private const val TAG = "MapActivity"
@@ -36,11 +38,10 @@ class MapActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         Log.d(TAG, "onCreate() called")
         super.onCreate(savedInstanceState)
+        requestWindowFeature(Window.FEATURE_NO_TITLE)
         Injector.applicationComponent.inject(this)
         mapViewModel = ViewModelProvider(this, mapViewModelFactory).get(MapViewModel::class.java)
         mapViewModel.appKey = resources.getString(R.string.google_maps_key)
-        Log.d(TAG, "ViewModel is ${mapViewModel.hashCode()}")
-        requestWindowFeature(Window.FEATURE_NO_TITLE)
         binding = MapActivityBinding.inflate(layoutInflater)
         navHeaderBinding = NavHeaderBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -78,6 +79,17 @@ class MapActivity : AppCompatActivity() {
     override fun onDestroy() {
         Log.d(TAG, "onDestroy() called")
         super.onDestroy()
+    }
+
+    override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
+        Log.d(TAG, "onPrepareOptionsMenu() called")
+        return super.onPrepareOptionsMenu(menu)
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        Log.d(TAG, "onCreateOptionsMenu() called")
+        //binding.toolbar.inflateMenu(R.menu.toolbar_menu)
+        return super.onCreateOptionsMenu(menu)
     }
 
     /**
@@ -139,6 +151,9 @@ class MapActivity : AppCompatActivity() {
                 else -> {
                     when (it) {
                         MapFragment::class.java.name -> {
+                            binding.navView.setCheckedItem(R.id.mapItem)
+                        }
+                        DetailedPlaceFragment::class.java.name -> {
                             binding.navView.setCheckedItem(R.id.mapItem)
                         }
                         SettingsFragment::class.java.name -> {

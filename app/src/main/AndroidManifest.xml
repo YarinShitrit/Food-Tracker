@@ -16,6 +16,12 @@
         android:theme="@style/AppTheme">
 
         <meta-data
+            android:name="firebase_messaging_auto_init_enabled"
+            android:value="false" />
+        <meta-data
+            android:name="firebase_analytics_collection_enabled"
+            android:value="false" />
+        <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="@string/google_maps_key" />
         <meta-data
@@ -44,7 +50,13 @@
                 <action android:name="android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS" />
             </intent-filter>
         </activity>
-
+        <service
+            android:name=".firebase.MyFirebaseMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
         <receiver android:name=".location.GPSCheckReceiver">
             <intent-filter>
                 <action android:name="android.intent.action.PROVIDER_CHANGED" />

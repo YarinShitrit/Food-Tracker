@@ -11,6 +11,8 @@ import com.example.burgertracker.user.User
 import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.database.DatabaseReference
+import com.google.firebase.ktx.Firebase
+import com.google.firebase.messaging.ktx.messaging
 import com.squareup.picasso.Picasso
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -135,38 +137,85 @@ class AppRepository {
         }
     }
 
-    suspend fun addPlaceToFavorites(userID: String, place: Place) {
+    /**
+     * Adding a place to user favorites and afterwards increasing the place total favorites by 1
+     */
+    fun addPlaceToFavorites(userID: String, place: Place) {
         Log.d(TAG, "addPlaceToFavorites() called")
-        placesDao.insertPlace(place)
         firebaseDBRef.child("users").child(userID).child("favorite_places").child(place.place_id)
             .setValue(place)
             .addOnCompleteListener {
                 if (it.isSuccessful) {
-                    Log.d(TAG, "Successfully added place to firebase database")
+                    Log.d(TAG, "Successfully added ${place.name} to firebase database")
                 } else {
                     Log.d(TAG, "Failed to add place to firebase database")
                 }
             }
     }
 
-    suspend fun removePlaceFromFavorites(userID: String, place: Place) {
-        firebaseDBRef.child("users").child(userID).child("favorite_places").child(place.place_id)
-            .removeValue().addOnCompleteListener {
+    fun deletePlaceFromFavorites(userID: String, placeID: String) {
+        Log.d(TAG, "removePlaceFromFavorites() called")
+        firebaseDBRef.child("users").child(userID).child("favorite_places").child(placeID)
+            .removeValue()
+            .addOnCompleteListener {
                 if (it.isSuccessful) {
                     Log.d(TAG, "Successfully removed place from firebase database")
                 } else {
                     Log.d(TAG, "Failed to remove place from firebase database")
                 }
             }
-        placesDao.deletePlace(place)
+    }
+
+    fun addUserToPlaceCloudUpdates(userID: String, placeID: String) {
+        //Adding user as a subscriber to the place in the database location
+        firebaseDBRef.child("places").child(placeID).child("subscribers").child(userID)
+            .setValue(userID).addOnCompleteListener {
+                if (it.isSuccessful) {
+                    Log.d(TAG, "Added user $userID as subscriber to place $placeID")
+                } else {
+                    Log.d(TAG, "Failed to add user $userID as subscriber to place $placeID")
+                }
+            }
+        //Adding the user to FCM place topic
+        Firebase.messaging.subscribeToTopic(placeID)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    Log.d(TAG, "Added user $userID to $placeID FCM updates")
+                } else {
+                    Log.d(TAG, "Failed to add user $userID to $placeID FCM updates")
+                }
+            }
+    }
+
+    fun removeUserFromPlaceCloudUpdates(userID: String, placeID: String) {
+        //Unsubscribe the user from the place in the database location
+        firebaseDBRef.child("places").child(placeID).child("subscribers").child(userID)
+            .removeValue().addOnCompleteListener {
+                if (it.isSuccessful) {
+                    Log.d(TAG, "Unsubscribed user $userID from place $placeID")
+                } else {
+                    Log.d(TAG, "Failed to unsubscribe $userID from place $placeID")
+                }
+            }
+        //Removing the user from FCM place topic
+        Firebase.messaging.unsubscribeFromTopic(placeID)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    Log.d(TAG, "Removed user $userID from $placeID FCM updates")
+                } else {
+                    Log.d(TAG, "Failed to remove user $userID from $placeID FCM updates")
+                }
+            }
     }
 
     suspend fun getPlace(place: Place) = placesDao.getIfPlaceIsFavorite(place.place_id)
     suspend fun getAllPlaces() = placesDao.getAllPlacesAsync()
     suspend fun getAllPlacesByDistance() = placesDao.getAllPlacesByDistance()
     suspend fun deleteAllPlaces(userID: String) {
+        Log.d(TAG, "deleteAllPlaces() called")
         firebaseDBRef.child("users").child(userID).child("favorite_places")
-            .removeValue().addOnCompleteListener {
+            .removeValue()
+            .addOnCompleteListener {
                 if (it.isSuccessful) {
                     Log.d(TAG, "Successfully removed all places from firebase database")
                 } else {
@@ -174,5 +223,16 @@ class AppRepository {
                 }
             }
         placesDao.deleteAllPlaces()
+    }
+
+    fun setUserFCMToken(userID: String, token: String) {
+        firebaseDBRef.child("users").child(userID).child("token").setValue(token)
+            .addOnCompleteListener {
+                if (it.isSuccessful) {
+                    Log.d(TAG, "Successfully assigned token $token to user $userID")
+                } else {
+                    Log.d(TAG, "Failed to assign token $token} to user $userID")
+                }
+            }
     }
 }

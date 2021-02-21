@@ -78,7 +78,7 @@ class LoginFragment : Fragment() {
                 TAG,
                 "User ${auth.currentUser!!.displayName} already logged in -> navigating to MapFragment "
             )
-            fetchUserData(auth.currentUser!!)
+            initUserData(auth.currentUser!!)
             findNavController().navigate(R.id.action_loginFragment_to_mapsFragment)
             onDestroyView()
         } else {
@@ -134,7 +134,7 @@ class LoginFragment : Fragment() {
                     Log.d(TAG, "signInWithCredential:success")
                     val firebaseUser = task.result.user
                     if (firebaseUser != null) {
-                        fetchUserData(firebaseUser)
+                        initUserData(firebaseUser)
                         if (task.result.additionalUserInfo!!.isNewUser) {
                             Log.d(TAG, "Creating new user to database")
                             mapViewModel.createNewUser()
@@ -197,7 +197,7 @@ class LoginFragment : Fragment() {
                     Log.d(TAG, "signInWithCredential:success")
                     val user = task.result.user
                     if (user != null) {
-                        fetchUserData(user, token.token)
+                        initUserData(user, token.token)
                         if (task.result.additionalUserInfo!!.isNewUser) {
                             Log.d(TAG, "Creating new user to database")
                             mapViewModel.createNewUser(token.token)
@@ -231,7 +231,7 @@ class LoginFragment : Fragment() {
                     Log.d(TAG, "signInWithCredential:success")
                     val user = task.result.user
                     if (user != null) {
-                        fetchUserData(user)
+                        initUserData(user)
                         findNavController().navigate(R.id.action_loginFragment_to_mapsFragment)
                     } else {
                         // Sign in failed, display a message and update the UI
@@ -281,8 +281,7 @@ class LoginFragment : Fragment() {
 
     }
 
-    private fun fetchUserData(user: FirebaseUser, fbToken: String? = null) {
-        mapViewModel.currentUser.value = user
-        mapViewModel.downloadCurrentUserPhoto(fbToken)
+    private fun initUserData(user: FirebaseUser, fbToken: String? = null) {
+        mapViewModel.initUserData(user, fbToken)
     }
 }

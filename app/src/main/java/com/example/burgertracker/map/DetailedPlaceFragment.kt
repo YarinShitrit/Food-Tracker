@@ -13,6 +13,7 @@ import androidx.fragment.app.viewModels
 import androidx.transition.TransitionInflater
 import com.example.burgertracker.dagger.Injector
 import com.example.burgertracker.databinding.FragmentDetailedPlaceBinding
+import com.example.burgertracker.firebase.FCMServiceEvents
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -50,13 +51,16 @@ class DetailedPlaceFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         Log.d(TAG, "onViewCreated() called")
         mapViewModel.currentFragment.value = this::class.java.name
+        mapViewModel.addUserToPlaceCloudUpdates()
         updateUI()
-        setListeners()
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         Log.d(TAG, "onDestroyView() called")
+        mapViewModel.removeUserFromPlaceCloudUpdates()
+        FCMServiceEvents.placeFavoritesLiveData.removeObservers(requireActivity())
+        FCMServiceEvents.placeFavoritesLiveData.value = "0"
         _binding = null
     }
 
@@ -66,6 +70,7 @@ class DetailedPlaceFragment : Fragment() {
         binding.placeAddress.text = place.formatted_address
         binding.placeDistance.text = "Distance: ${place.distance}km"
         binding.placeRating.text = "Rating: ${place.rating}"
+        binding.placeFavorites.text = "${place.totalFavorites} people added it to favorites"
         ioSCOPE.launch {
             if (mapViewModel.getIfPlaceIsFavorite(place) != null) {
                 withContext(Dispatchers.Main) {
@@ -77,6 +82,15 @@ class DetailedPlaceFragment : Fragment() {
                 }
             }
         }
+        setListeners()
+        initObservers()
+    }
+
+    private fun initObservers() {
+        FCMServiceEvents.placeFavoritesLiveData.observe(requireActivity(),{
+            Log.d(TAG,"Current Place favorites changed")
+            binding.placeFavorites.text = "$it people added it to favorites"
+        })
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -97,7 +111,6 @@ class DetailedPlaceFragment : Fragment() {
                                 Toast.LENGTH_SHORT
                             ).show()
                         }
-
                     } else {
                         Log.d(TAG, "Adding ${place.name} to favorites")
                         mapViewModel.addPlaceToFavorites(place)

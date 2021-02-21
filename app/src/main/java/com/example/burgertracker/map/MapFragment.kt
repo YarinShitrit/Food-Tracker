@@ -167,6 +167,8 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     override fun onDestroyView() {
         super.onDestroyView()
         Log.d(TAG, "onDestroyView() called")
+        mapViewModel.appMap.value?.clear()
+        mapViewModel.placesList.value?.clear()
         _binding = null
     }
 
@@ -232,6 +234,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                     val extras = FragmentNavigatorExtras(
                         infoWindowBinding.placeName to "place_transition"
                     )
+                    mapViewModel
                     findNavController().navigate(
                         R.id.action_mapFragment_to_detailedFragment,
                         null,
@@ -380,7 +383,6 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                 .icon(place.markerIcon)
             mapViewModel.appMap.value!!.addMarker(markerOptions)
         }
-
     }
 
     /**
@@ -461,7 +463,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             }
         })
         mapViewModel.mediatorPlacesList.observe(this, {
-            Log.d(TAG, "Mediator observer triggered -> calling displayPlaces()")
+            Log.d(TAG, "Mediator observer triggered -> calling displayPlaces() with $it")
             displayPlaces(it)
         })
 
