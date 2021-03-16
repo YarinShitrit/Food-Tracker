@@ -16,95 +16,142 @@ exports.onPlaceSubscribed = functions.database
         const userID = context.params.userID;
         console.log(`New subscriber to place ${placeID}, subscriber is ${userID}`)
         const totalFavoritesRef = admin.database().ref("/places/" + placeID + "/total_favorites");
-        return totalFavoritesRef.transaction((currentFavorites) => {
-            currentFavorites = (currentFavorites || 0)
-            console.log(`retrieved place favorites for ${placeID}, current favorites: ${currentFavorites}`);
+        totalFavoritesRef.once("value", (snapshot) => {
+            const totalFavorites = (snapshot.val() || 0)
+            console.log(`retrieved place favorites for ${placeID}, current favorites: ${totalFavorites}`);
             const payload = {
-                "notification": {
-                    "title": "Place total favorites"
-                },
                 "data": {
                     "placeID": `${placeID}`,
-                    "favorites": `${currentFavorites}`
+                    "favorites": `${totalFavorites}`
                 }
             }
-            admin.database().ref("/users/" + userID + "/token").on("value", (snapshot) => {
+            admin.database().ref("/users/" + userID + "/token").once("value", async (snapshot) => {
                 var token = snapshot.val()
                 console.log("user token is " + token);
-                admin.messaging().sendToDevice(token, payload) //sends update to place subscribers
-                console.log(`Sent message to user ${userID}`)
+                await admin.messaging().sendToDevice(token, payload).then(() => {
+                    console.log(`Sent message to user ${userID}`)
+                }) //sends update to place subscribers
             }, (err) => {
                 console.log("Failed to get user token", err)
             });
-        }).then(() => {
-            console.log("Succsusfully finished transaction")
-        })
-    })
+        }, (err) => {
+            console.log("Failed to get total favorites", err)
+        });
+    });
 
 
 /**
      * increasing a place favorites after a user added it to favorites
      * @param {*} placeID the ID of place to incraese its total favorites
      */
-exports.increasePlaceFavorites = function increasePlaceFavorites(placeID) {
-    const totalFavoritesRef = admin.database()
-        .ref("/places/" + placeID + "/total_favorites");
-    totalFavoritesRef.transaction((currentFavorites) => {
-        console.log(`Increasing place favorites for ${placeID}, current favorites: ${currentFavorites}`);
-        const payload = {
-            "notification": {
-                "title": "Place total favorites increased"
-            },
-            "data": {
-                "placeID": `${placeID}`,
-                "favorites": `${(currentFavorites || 0) + 1}`
+exports.increasePlaceFavorites = async function increasePlaceFavorites(placeID) {
+    console.log("increasePlaceFavorites() called");
+    const totalFavoritesRef = admin.database().ref("/places/" + placeID + "/total_favorites");
+    totalFavoritesRef.once("value", (snapshot) => {
+        console.log(`Increasing place favorites for ${placeID}, current favorites: ${snapshot.val() || 0}`);
+        snapshot.ref.set((snapshot.val() || 0) + 1, (err) => {
+            if (err != null) {
+                console.log("Failed to increase place favorites ->", err);
             }
-        }
-        admin.messaging().sendToTopic(placeID, payload) //sends update to place subscribers on favorites increase
-        return (currentFavorites || 0) + 1;
-    }).then(() => {
-        console.log("Succssusflly increased place favorites");
+            else {
+                console.log("updating total favorites to ", (snapshot.val() || 0) + 1)
+                const payload = {
+                    "data": {
+                        "placeID": `${placeID}`,
+                        "favorites": `${(snapshot.val() || 0) + 1}`
+                    }
+                }
+                admin.messaging().sendToTopic(placeID, payload).then(() => {
+                    console.log("Sent message to users about increase")
+                })//sends update to place subscribers on favorites increase
+                return (snapshot.val() || 0) + 1
+            }
+        });
     });
 };
 
-exports.decreasePlaveFavorites = function decreasePlaveFavorites(placeID) {
+exports.decreasePlaceFavorites = async function decreasePlaveFavorites(placeID) {
+    console.log("decreasePlaceFavorites() called")
     const totalFavoritesRef = admin.database()
         .ref("/places/" + placeID + "/total_favorites");
-    totalFavoritesRef.transaction((currentFavorites) => {
-        if(currentFavorites == null){
-            console.log("favorites is null")
-            return null
+    totalFavoritesRef.once("value", (snapshot) => {
+        const value = snapshot.val()
+        console.log(`Decreasing place favorites for ${placeID}, current favorites: ${value}`);
+        const payload = {
+            "data": {
+                "placeID": `${placeID}`,
+                "favorites": `${(value - 1)}`
+            }
         }
-            console.log(`Decreasing place favorites for ${placeID}, current favorites: ${currentFavorites}`);
-            const payload = {
-                "notification": {
-                    "title": "Place total favorites decreased"
-                },
-                "data": {
-                    "placeID": `${placeID}`,
-                    "favorites": `${currentFavorites - 1}`
+        admin.messaging().sendToTopic(placeID, payload).then(() => {
+            console.log("Sent message to users about decrease")
+        }) //sends update to place subscribers on favorites decrease
+        if (value == 1) {
+            snapshot.ref.remove((err) => {
+                if (err != null) {
+                    console.log("Failed to remove place ->", err);
                 }
-            }
-            admin.messaging().sendToTopic(placeID, payload) //sends update to place subscribers on favorites decrease
-            if (currentFavorites == 1) {
-                return null;
-            } else {
-                return currentFavorites - 1;
-            }
-    
-    }).then(() => {
-        console.log("Succssusflly decreased place faovrites");
-    });
-};
+                else {
+                    console.log("Removed place")
+                    return null
+                }
+            })
+        }
+        else {
+            snapshot.ref.set(value - 1, (err) => {
+                if (err) {
+                    console.log("Failed to decrease place favorites ->", err);
+                }
+                else {
+                    console.log("Decreased total favorites")
+                    return value - 1;
+                }
+            })
+        }
+    })
+}
 
 exports.addPlace = functions.database
     .ref("/users/{userID}/favorite_places/{placeID}")
     .onCreate((snapshot, context) => {
-        console.log("Place added for user ",
+        console.log(`Place added for user ${context.params.userID}, Place is ${snapshot.val()["name"]}`);
+        exports.increasePlaceFavorites(context.params.placeID).then((snapshot) => {
+            console.log("place increased value is ", snapshot)
+            /*
+            const payload = {
+                "data": {
+                    "placeID": `${context.params.placeID}`,
+                    "favorites": `${(snapshot || 0) + 1}`
+                }
+            }
+            admin.messaging().sendToTopic(context.params.placeID, payload).then(() => {
+                console.log("Sent message to users about increase")
+            })//sends update to place subscribers on favorites increase*/
+        })
+
+        // exports.subscribeUserToPlaceUpdates(context.params.userID,context.params.placeID);
+    });
+
+exports.deletePlace = functions.database
+    .ref("/users/{userID}/favorite_places/{placeID}")
+    .onDelete((snapshot, context) => {
+        console.log("Place deleted for user ",
             context.params.userID,
             ", Place is ", snapshot.val()["name"]);
-        exports.increasePlaceFavorites(snapshot.val()["place_id"]);
-        // exports.subscribeUserToPlaceUpdates(context.params.userID,context.params.placeID);
+        exports.decreasePlaceFavorites(context.params.placeID)
+            .then((snapshot) => {
+                /*console.log("place decreased value is ", snapshot)
+                const payload = {
+                    "data": {
+                        "placeID": `${context.params.placeID}`,
+                        "favorites": `${(snapshot || 0)}`
+                    }
+                }
+                admin.messaging().sendToTopic(context.params.placeID, payload).then(() => {
+                    console.log("Sent message to users about decrease")
+                })*/ //sends update to place subscribers on favorites decrease
+            })
+        // exports.unsubscribeUserToPlaceUpdates(context.params.userID, context.params.placeID);
     });
 
 exports.subscribeUserToPlaceUpdates =
@@ -114,7 +161,7 @@ exports.subscribeUserToPlaceUpdates =
             var token = snapshot.val()
             console.log("user token is " + token);
             admin.messaging().subscribeToTopic(token, placeID)
-                .then((response) => {
+                .then(() => {
                     console.log(`Successfully assigned user ${userID} to place ${placeID}`);
                 }, (err) => {
                     console.log("Failed to subscribe user", err)
@@ -124,23 +171,13 @@ exports.subscribeUserToPlaceUpdates =
         });
     }
 
-exports.deletePlace = functions.database
-    .ref("/users/{userID}/favorite_places/{placeID}")
-    .onDelete((snapshot, context) => {
-        console.log("Place deleted for user ",
-            context.params.userID,
-            ", Place is ", snapshot.val()["name"]);
-        return exports.decreasePlaveFavorites(snapshot.val()["place_id"]);
-        // exports.unsubscribeUserToPlaceUpdates(context.params.userID, context.params.placeID);
-    });
-
 exports.unsubscribeUserToPlaceUpdates =
     function unsubscribeUserToPlaceUpdates(userID, placeID) {
         admin.database().ref("/users/" + userID + "/token").on("value", (snapshot) => {
             var token = snapshot.val()
             console.log("user token is " + token);
             admin.messaging().unsubscribeFromTopic(token, placeID)
-                .then((response) => {
+                .then(() => {
                     console.log(`Successfully unassigned user ${userID} to place ${placeID}`);
                 }, (err) => {
                     console.log("Failed to unsubscribe user", err)

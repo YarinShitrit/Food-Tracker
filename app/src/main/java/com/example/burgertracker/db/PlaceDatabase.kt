@@ -23,6 +23,7 @@ abstract class PlaceDatabase : RoomDatabase() {
         }
 
         private fun buildDatabase(context: Context) =
-            Room.databaseBuilder(context, PlaceDatabase::class.java, "place_database").build()
+            Room.databaseBuilder(context, PlaceDatabase::class.java, "place_database")
+                .fallbackToDestructiveMigration().build()
     }
 }

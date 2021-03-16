@@ -78,6 +78,7 @@ class FavoritesFragment : Fragment() {
             LinearLayoutManager(requireContext(), RecyclerView.VERTICAL, false)
         binding.favoritesRecyclerView.adapter = adapter
         mapViewModel.favPlaces.observe(requireActivity(), {
+            Log.d(TAG,"places added to list $it")
             (binding.favoritesRecyclerView.adapter as FavListAdapter).setData(it)
         })
         mapViewModel.getAllPlacesByDistance()

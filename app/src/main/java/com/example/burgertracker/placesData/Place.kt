@@ -25,6 +25,9 @@ data class Place(
     var imageString: String? = ""
 ) : Serializable {
     var distance: Float? = null
+
+    @get:Exclude
+    @Ignore
     var totalFavorites: Long = 0L
 
     @get:Exclude

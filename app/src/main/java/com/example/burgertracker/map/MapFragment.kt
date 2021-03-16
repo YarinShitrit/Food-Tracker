@@ -72,6 +72,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     private lateinit var infoButtonClickListener: OnInfoWindowElemTouchListener
     private lateinit var infoWindow: PlaceInfoWindow
     private var gpsSnackBar: Snackbar? = null
+    private var locationFlag = false
 
     override fun onCreate(p0: Bundle?) {
         super.onCreate(p0)
@@ -122,11 +123,12 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         super.onResume()
         Log.d(TAG, "onResume() called")
         if (checkPermissions()) {
+            getCurrentLocation(requireActivity())
             if (mapViewModel.appMap.value != null) {
-                getCurrentLocation(requireActivity())
+                Log.d(TAG, "1")
                 updateUI()
                 if (!mapViewModel.placesList.value.isNullOrEmpty()) {
-                    displayPlaces(mapViewModel.placesList.value!!)
+                    mapViewModel.placesList.value!!.forEach { displayPlaces(it) }
                 }
             }
         } else if (permissionsResultFlag) {
@@ -147,9 +149,10 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         } else {
             //Permissions Granted
             updateUI()
-            getCurrentLocation(requireActivity())
+            //Log.d(TAG,"2")
+            //getCurrentLocation(requireActivity())
             if (!mapViewModel.placesList.value.isNullOrEmpty()) {
-                displayPlaces(mapViewModel.placesList.value!!)
+                mapViewModel.placesList.value!!.forEach { displayPlaces(it) }
             }
         }
     }
@@ -168,7 +171,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         super.onDestroyView()
         Log.d(TAG, "onDestroyView() called")
         mapViewModel.appMap.value?.clear()
-        mapViewModel.placesList.value?.clear()
+        locationFlag = false
         _binding = null
     }
 
@@ -282,7 +285,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                     activity.getSystemService(Application.LOCATION_SERVICE) as LocationManager
                 if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
                     //Try to get location from LocationServices
-                    val currentLocationTask =
+                    var currentLocationTask =
                         LocationServices.getFusedLocationProviderClient(requireContext()).lastLocation
                     currentLocationTask.addOnSuccessListener { location: Location? ->
                         if (location != null) {
@@ -291,7 +294,10 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                                 "Received Location from LocationServices -> Current location is ${location.toLatLng()}"
                             )
                             gpsSnackBar?.setText("Connected!")
-                            mapViewModel.userLocation.value = location.toLatLng()
+                            if (mapViewModel.userLocation.value != location.toLatLng()) { //checking if userLocation is already the same to ignore duplications
+                                mapViewModel.userLocation.value = location.toLatLng()
+                            }
+                            currentLocationTask = null
                         } else {
                             val locationGPS: Location? =
                                 locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
@@ -301,7 +307,9 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                                     "Received location from LocationManager -> Current location is ${locationGPS.toLatLng()}"
                                 )
                                 gpsSnackBar?.setText("Connected!")
-                                mapViewModel.userLocation.value = locationGPS.toLatLng()
+                                if (mapViewModel.userLocation.value != locationGPS.toLatLng()) {
+                                    mapViewModel.userLocation.value = locationGPS.toLatLng()
+                                }
                             } else {
                                 Log.d(TAG, "Unable to get current location")
                                 if (gpsSnackBar != null) {
@@ -374,15 +382,13 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     /**
      * Display all places from placesList on the map
      */
-    private fun displayPlaces(placesList: ArrayList<Place>) {
+    private fun displayPlaces(place: Place) {
         Log.d(TAG, "displayPlaces() called")
-        for (place in placesList) {
-            val markerOptions = MarkerOptions()
-                .position(LatLng(place.geometry.location.lat, place.geometry.location.lng))
-                .title(place.name)
-                .icon(place.markerIcon)
-            mapViewModel.appMap.value!!.addMarker(markerOptions)
-        }
+        val markerOptions = MarkerOptions()
+            .position(LatLng(place.geometry.location.lat, place.geometry.location.lng))
+            .title(place.name)
+            .icon(place.markerIcon)
+        mapViewModel.appMap.value!!.addMarker(markerOptions)
     }
 
     /**
@@ -457,12 +463,15 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                 )
                 true
             }
-            if (mapViewModel.placesList.value.isNullOrEmpty()) {
-                Log.d(TAG, "calling getNearbyPlaces() from placesList observer")
-                mapViewModel.getNearbyPlaces(null)
+            if (!locationFlag) {
+                locationFlag = true
+                if (mapViewModel.placesList.value.isNullOrEmpty()) {
+                    Log.d(TAG, "calling getNearbyPlaces() from placesList observer")
+                    mapViewModel.getNearbyPlaces(null)
+                }
             }
         })
-        mapViewModel.mediatorPlacesList.observe(this, {
+        mapViewModel.mediatorPlace.observe(this, {
             Log.d(TAG, "Mediator observer triggered -> calling displayPlaces() with $it")
             displayPlaces(it)
         })
@@ -490,41 +499,49 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
     private fun initMarkersOnClick() {
         Log.d(TAG, "enableMarkersOnClick called")
-        mapViewModel.appMap.value!!.setOnMarkerClickListener {
+        mapViewModel.appMap.value?.setOnMarkerClickListener {
             val currentFocusedPlace = mapViewModel.placesList.value?.find { place ->
                 LatLng(place.geometry.location.lat, place.geometry.location.lng) == it.position
-            }!!.also {
-                infoWindow.setPlace(it)
-                Log.d(TAG, "Marker clicked, place is ${it.place_id}")
-                CoroutineScope(Dispatchers.IO).launch {
-                    val ifPlaceIsFavorite = mapViewModel.getIfPlaceIsFavorite(it)
-                    withContext(Dispatchers.Main) {
-                        if (ifPlaceIsFavorite != null) {
-                            Log.d(TAG, "place is in favorites")
-                            setInFavoriteButtonImage()
-                            it.isLiked = true
-                        } else {
-                            Log.d(TAG, "place is not in favorites")
-                            setNotInFavoriteButtonImage()
+            }?.also {
+
+                Log.d(TAG, "Marker clicked, place is ${it.name}")
+                runBlocking {
+                    /*
+                    runs Async to get if place is in favorites before displaying its infoWindow on the map
+                     */
+                    val ifPlaceIsFavorite = async(Dispatchers.IO) {
+                        withContext(Dispatchers.Default) {
+                            mapViewModel.getIfPlaceIsFavorite(it)
                         }
                     }
-                    mapViewModel.currentFocusedPlace.postValue(it)
+                    if (ifPlaceIsFavorite.await() != null) {
+                        Log.d(TAG, "place is in favorites")
+                        setInFavoriteButtonImage()
+                        it.isLiked = true
+                    } else {
+                        Log.d(TAG, "place is not in favorites")
+                        setNotInFavoriteButtonImage()
+                    }
+                    infoWindow.setPlace(it)
                 }
             }
-            mapViewModel.appMap.value!!.animateCamera(
-                CameraUpdateFactory.newLatLngZoom(
-                    LatLng(
-                        currentFocusedPlace.geometry.location.lat,
-                        currentFocusedPlace.geometry.location.lng
-                    ), mapViewModel.appMap.value!!.cameraPosition.zoom
+            mapViewModel.currentFocusedPlace.value = currentFocusedPlace
+            if (currentFocusedPlace != null) {
+                mapViewModel.appMap.value!!.animateCamera(
+                    CameraUpdateFactory.newLatLngZoom(
+                        LatLng(
+                            currentFocusedPlace.geometry.location.lat,
+                            currentFocusedPlace.geometry.location.lng
+                        ), mapViewModel.appMap.value!!.cameraPosition.zoom
+                    )
                 )
-            )
+            }
             false
         }
     }
 
     private fun setNotInFavoriteButtonImage() {
-        Log.d(TAG, "setEmptyLikeButtonImage() called")
+        Log.d(TAG, "setNotInFavoriteButtonImage() called")
         infoWindowBinding.like.crossfade = 0F
         infoWindowBinding.like.setBackgroundColor(
             ResourcesCompat.getColor(

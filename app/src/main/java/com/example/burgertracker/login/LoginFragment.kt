@@ -72,6 +72,7 @@ class LoginFragment : Fragment() {
         Log.d(TAG, "onViewCreated() called")
         super.onViewCreated(view, savedInstanceState)
         mapViewModel.currentFragment.value = this::class.java.name
+        mapViewModel.placesList.value?.clear()
         auth = FirebaseAuth.getInstance()
         if (auth.currentUser != null) {
             Log.d(
@@ -134,11 +135,11 @@ class LoginFragment : Fragment() {
                     Log.d(TAG, "signInWithCredential:success")
                     val firebaseUser = task.result.user
                     if (firebaseUser != null) {
-                        initUserData(firebaseUser)
                         if (task.result.additionalUserInfo!!.isNewUser) {
                             Log.d(TAG, "Creating new user to database")
                             mapViewModel.createNewUser()
                         }
+                        initUserData(firebaseUser)
                         findNavController().navigate(R.id.action_loginFragment_to_mapsFragment)
                     }
                 } else {
@@ -197,11 +198,11 @@ class LoginFragment : Fragment() {
                     Log.d(TAG, "signInWithCredential:success")
                     val user = task.result.user
                     if (user != null) {
-                        initUserData(user, token.token)
                         if (task.result.additionalUserInfo!!.isNewUser) {
                             Log.d(TAG, "Creating new user to database")
                             mapViewModel.createNewUser(token.token)
                         }
+                        initUserData(user, token.token)
                         findNavController().navigate(R.id.action_loginFragment_to_mapsFragment)
                     }
                 } else {

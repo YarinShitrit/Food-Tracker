@@ -4,7 +4,9 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
+import com.example.burgertracker.R
 import com.example.burgertracker.databinding.FavListItemBinding
 import com.example.burgertracker.placesData.Place
 

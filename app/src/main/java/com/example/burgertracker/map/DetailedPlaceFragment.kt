@@ -51,14 +51,24 @@ class DetailedPlaceFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         Log.d(TAG, "onViewCreated() called")
         mapViewModel.currentFragment.value = this::class.java.name
-        mapViewModel.addUserToPlaceCloudUpdates()
         updateUI()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        Log.d(TAG, "onResume() called")
+        mapViewModel.addUserToPlaceCloudUpdates()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        Log.d(TAG, "onStop() called")
+        mapViewModel.removeUserFromPlaceCloudUpdates()//Removing FCM when fragment is not longer visible to user
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         Log.d(TAG, "onDestroyView() called")
-        mapViewModel.removeUserFromPlaceCloudUpdates()
         FCMServiceEvents.placeFavoritesLiveData.removeObservers(requireActivity())
         FCMServiceEvents.placeFavoritesLiveData.value = "0"
         _binding = null
@@ -87,8 +97,8 @@ class DetailedPlaceFragment : Fragment() {
     }
 
     private fun initObservers() {
-        FCMServiceEvents.placeFavoritesLiveData.observe(requireActivity(),{
-            Log.d(TAG,"Current Place favorites changed")
+        FCMServiceEvents.placeFavoritesLiveData.observe(requireActivity(), {
+            Log.d(TAG, "Current Place favorites changed")
             binding.placeFavorites.text = "$it people added it to favorites"
         })
     }

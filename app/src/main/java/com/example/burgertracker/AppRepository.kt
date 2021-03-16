@@ -53,7 +53,7 @@ class AppRepository {
         location: LatLng,
         key: String,
         searchRadius: Int,
-    ): Flow<ArrayList<Place>> = flow {
+    ): Flow<Place> = flow {
         Log.d(TAG, "getNearbyPlaces called")
         try {
             val retrofitResponse: Response<PlaceResult>
@@ -77,7 +77,7 @@ class AppRepository {
             if (retrofitResponse.isSuccessful) {
                 Log.d(TAG, "SUCCESS ${retrofitResponse.body()?.results!!}")
                 Log.d(TAG, "emit from nearbyPlaces")
-                emit(retrofitResponse.body()?.results!!)
+                retrofitResponse.body()?.results!!.forEach { emit(it) }
                 if (!retrofitResponse.body()?.next_page_token.isNullOrEmpty()) {
                     Log.d(TAG, "next page available")
                     delay(1750)
@@ -98,7 +98,7 @@ class AppRepository {
     private suspend fun getNearbyPlacesWithToken(
         key: String,
         nextPageToken: String
-    ): Flow<ArrayList<Place>> = flow {
+    ): Flow<Place> = flow {
         Log.d(TAG, "getNearbyPlacesWithToken called")
         val retrofitResponse: Response<PlaceResult> = retrofit.getNearbyPlaces(
             nextPageToken,
@@ -106,7 +106,7 @@ class AppRepository {
         )
         if (retrofitResponse.isSuccessful) {
             Log.d(TAG, "emit from nearbyPlacesWithToken")
-            emit(retrofitResponse.body()?.results!!)
+            retrofitResponse.body()?.results!!.forEach { emit(it) }
             (retrofitResponse.body()?.results!!)
             if (!retrofitResponse.body()?.next_page_token.isNullOrEmpty()) {
                 Log.d(
@@ -127,7 +127,7 @@ class AppRepository {
     }
 
     fun createNewUser(user: User) {
-        Log.d(TAG, "createNewUser() called")
+        Log.d(TAG, "createNewUser() called -> user is $user")
         firebaseDBRef.child("users").child(user.id).setValue(user).addOnCompleteListener {
             if (it.isSuccessful) {
                 Log.d(TAG, "User successfully created ")

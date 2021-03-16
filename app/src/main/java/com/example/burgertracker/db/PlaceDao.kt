@@ -21,9 +21,9 @@ interface PlaceDao {
 
     @Query("SELECT * FROM places WHERE place_id = :placeID")
     suspend fun getPlaceFavorites(placeID: String): Place?
-
+/*
     @Query("UPDATE places SET totalFavorites = :totalFavorites WHERE place_id =:placeID")
-    suspend fun updateTotalFavorites(placeID: String, totalFavorites: Long)
+    suspend fun updateTotalFavorites(placeID: String, totalFavorites: Long)*/
 
     @Query("DELETE FROM places WHERE place_id =:placeID")
     suspend fun deletePlace(placeID: String)

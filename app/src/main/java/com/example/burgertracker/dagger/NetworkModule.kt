@@ -5,6 +5,7 @@ import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
 import dagger.Module
 import dagger.Provides
+import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import javax.inject.Singleton
@@ -21,6 +22,7 @@ class NetworkModule {
     fun provideRetrofitService(): PlacesRetrofitInterface {
         return Retrofit.Builder()
             .baseUrl(BASE_URL)
+            .client(OkHttpClient().newBuilder().build())
             .addConverterFactory(GsonConverterFactory.create())
             .build().create(PlacesRetrofitInterface::class.java)
     }

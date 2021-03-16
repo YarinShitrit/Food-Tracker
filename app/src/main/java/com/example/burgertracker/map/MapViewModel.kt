@@ -35,7 +35,7 @@ class MapViewModel(private val appRepository: AppRepository) : ViewModel() {
     val currentFragment = MutableLiveData<String>()
     val currentFocusedPlace = MutableLiveData<Place>()
     val placesList = MutableLiveData<ArrayList<Place>>()
-    val mediatorPlacesList = MutableLiveData<ArrayList<Place>>()
+    val mediatorPlace = MutableLiveData<Place>()
     val queryIcon = MutableLiveData<String>()
     val userLocation = MutableLiveData<LatLng>()
     val favPlaces = MutableLiveData<ArrayList<Place>>()
@@ -118,11 +118,11 @@ class MapViewModel(private val appRepository: AppRepository) : ViewModel() {
             ).collect {
                 setPlacesDistance(it)
                 MarkerIconGenerator.setPlacesMarkerIcon(it, queryIcon.value)
-                mediatorPlacesList.postValue(it)
+                mediatorPlace.postValue(it)
                 val allPlaces =
                     ArrayList<Place>().apply {
                         addAll(placesList.value!!)
-                        addAll(it)
+                        add(it)
                     }
                 placesList.postValue(allPlaces)
                 delay(50)
@@ -160,12 +160,12 @@ class MapViewModel(private val appRepository: AppRepository) : ViewModel() {
         }
     }
 
-    private fun setPlacesDistance(list: ArrayList<Place>) {
-        list.forEach {
+    private fun setPlacesDistance(place: Place) {
+        place.apply{
             val placeLocation = Location("destination")
                 .apply {
-                    latitude = it.geometry.location.lat
-                    longitude = it.geometry.location.lng
+                    latitude = place.geometry.location.lat
+                    longitude = place.geometry.location.lng
                 }
             val currentUserLocation = Location("current location")
                 .apply {
@@ -177,7 +177,7 @@ class MapViewModel(private val appRepository: AppRepository) : ViewModel() {
             var stringDistance = distance.toString()
             stringDistance =
                 stringDistance.substring(0, stringDistance.indexOf(".") + 2)
-            it.distance = stringDistance.toFloat()
+            place.distance = stringDistance.toFloat()
         }
     }
 
@@ -206,6 +206,7 @@ class MapViewModel(private val appRepository: AppRepository) : ViewModel() {
     }
 
     fun createNewUser(fbToken: String? = null) {
+        Log.d(TAG,"createNewUser() called")
         val firebaseUser = currentUser.value!!
         val user = User(firebaseUser.uid, firebaseUser.displayName, firebaseUser.email, fbToken)
         viewModelScope.launch(Dispatchers.IO) {

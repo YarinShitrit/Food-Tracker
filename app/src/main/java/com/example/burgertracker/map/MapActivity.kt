@@ -20,7 +20,6 @@ import com.example.burgertracker.favorites.FavoritesFragment
 import com.example.burgertracker.login.LoginFragment
 import com.example.burgertracker.settings.SettingsFragment
 import com.firebase.ui.auth.AuthUI
-import com.google.android.gms.common.GoogleApiAvailability
 import javax.inject.Inject
 
 private const val TAG = "MapActivity"
