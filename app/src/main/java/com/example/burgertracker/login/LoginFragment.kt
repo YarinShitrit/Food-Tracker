@@ -26,9 +26,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import com.google.android.material.snackbar.Snackbar
-import com.google.firebase.FirebaseException
 import com.google.firebase.auth.*
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 
@@ -72,6 +70,7 @@ class LoginFragment : Fragment() {
         Log.d(TAG, "onViewCreated() called")
         super.onViewCreated(view, savedInstanceState)
         mapViewModel.currentFragment.value = this::class.java.name
+        mapViewModel.deleteAllPlacesLocally()
         mapViewModel.placesList.value?.clear()
         auth = FirebaseAuth.getInstance()
         if (auth.currentUser != null) {
@@ -83,7 +82,7 @@ class LoginFragment : Fragment() {
             findNavController().navigate(R.id.action_loginFragment_to_mapsFragment)
             onDestroyView()
         } else {
-            setPhoneAuth()
+            //setPhoneAuth()
             binding.googleLoginBtn.setOnClickListener {
                 signInWithGoogle()
             }
@@ -135,11 +134,11 @@ class LoginFragment : Fragment() {
                     Log.d(TAG, "signInWithCredential:success")
                     val firebaseUser = task.result.user
                     if (firebaseUser != null) {
+                        initUserData(firebaseUser)
                         if (task.result.additionalUserInfo!!.isNewUser) {
                             Log.d(TAG, "Creating new user to database")
                             mapViewModel.createNewUser()
                         }
-                        initUserData(firebaseUser)
                         findNavController().navigate(R.id.action_loginFragment_to_mapsFragment)
                     }
                 } else {
@@ -224,7 +223,7 @@ class LoginFragment : Fragment() {
             }
     }
 
-    private fun signInWithPhone(credential: PhoneAuthCredential) {
+  /*  private fun signInWithPhone(credential: PhoneAuthCredential) {
         auth.signInWithCredential(credential)
             .addOnCompleteListener(requireActivity()) { task ->
                 if (task.isSuccessful) {
@@ -243,9 +242,9 @@ class LoginFragment : Fragment() {
                     }
                 }
             }
-    }
+    }*/
 
-    private fun setPhoneAuth() {
+   /* private fun setPhoneAuth() {
         auth.setLanguageCode("en")
         binding.sendSms.setOnClickListener {
             val options = PhoneAuthOptions.newBuilder(auth)
@@ -279,8 +278,7 @@ class LoginFragment : Fragment() {
                 .build()
             PhoneAuthProvider.verifyPhoneNumber(options)
         }
-
-    }
+    }*/
 
     private fun initUserData(user: FirebaseUser, fbToken: String? = null) {
         mapViewModel.initUserData(user, fbToken)

@@ -10,6 +10,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.viewModels
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import androidx.transition.TransitionInflater
 import com.example.burgertracker.dagger.Injector
 import com.example.burgertracker.databinding.FragmentDetailedPlaceBinding
@@ -43,6 +45,7 @@ class DetailedPlaceFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+        Log.d(TAG, "onCreateView() called")
         _binding = FragmentDetailedPlaceBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -71,13 +74,30 @@ class DetailedPlaceFragment : Fragment() {
         Log.d(TAG, "onDestroyView() called")
         FCMServiceEvents.placeFavoritesLiveData.removeObservers(requireActivity())
         FCMServiceEvents.placeFavoritesLiveData.value = "0"
+        mapViewModel.currentFocusedPlaceReviews.removeObservers(requireActivity())
+        mapViewModel.currentFocusedPlaceReviews.value?.clear()
         _binding = null
+    }
+
+    private fun initReviewsList() {
+        val adapter = ReviewsListAdapter()
+        binding.reviewsList.layoutManager =
+            LinearLayoutManager(requireContext(), RecyclerView.VERTICAL, false)
+        binding.reviewsList.adapter = adapter
+        mapViewModel.currentFocusedPlaceReviews.observe(requireActivity(), {
+            Log.d(TAG, "Reviews received from observer $it")
+            if (it != null) {
+                Log.d(TAG, binding.toString())
+                (binding.reviewsList.adapter as ReviewsListAdapter).setData(it)
+            }
+        })
+        mapViewModel.downloadDetailedPlaceReviews()
     }
 
     private fun updateUI() {
         val place = mapViewModel.currentFocusedPlace.value!!
         binding.placeName.text = place.name
-        binding.placeAddress.text = place.formatted_address
+        binding.placeAddress.text = place.vicinity
         binding.placeDistance.text = "Distance: ${place.distance}km"
         binding.placeRating.text = "Rating: ${place.rating}"
         binding.placeFavorites.text = "${place.totalFavorites} people added it to favorites"
@@ -94,6 +114,7 @@ class DetailedPlaceFragment : Fragment() {
         }
         setListeners()
         initObservers()
+        initReviewsList()
     }
 
     private fun initObservers() {

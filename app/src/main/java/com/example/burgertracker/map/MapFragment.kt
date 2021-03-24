@@ -404,6 +404,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             .apply {
                 setData(
                     arrayListOf(
+                        "All",
                         "Pizza",
                         "Sushi",
                         "Burger",
@@ -418,9 +419,13 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                 Log.d(TAG, "item clicked")
                 mapViewModel.placesList.value?.clear()
                 mapViewModel.appMap.value!!.clear()
-                mapViewModel.queryIcon.value = adapter.itemClicked
-                mapViewModel.getNearbyPlaces(adapter.itemClicked)
-
+                if (adapter.itemClicked == "All") {
+                    mapViewModel.queryIcon.value = null
+                    mapViewModel.getNearbyPlaces(null)
+                } else {
+                    mapViewModel.queryIcon.value = adapter.itemClicked
+                    mapViewModel.getNearbyPlaces(adapter.itemClicked)
+                }
             }
         })
         binding.foodTypeList.adapter = adapter

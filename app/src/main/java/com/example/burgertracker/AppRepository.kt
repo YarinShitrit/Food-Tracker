@@ -6,6 +6,8 @@ import com.example.burgertracker.dagger.Injector
 import com.example.burgertracker.db.PlaceDao
 import com.example.burgertracker.placesData.Place
 import com.example.burgertracker.placesData.PlaceResult
+import com.example.burgertracker.placesData.PlaceReview
+import com.example.burgertracker.placesData.PlaceReviewResult
 import com.example.burgertracker.retrofit.PlacesRetrofitInterface
 import com.example.burgertracker.user.User
 import com.google.android.gms.maps.model.LatLng
@@ -13,11 +15,15 @@ import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.messaging.ktx.messaging
+import com.google.gson.Gson
 import com.squareup.picasso.Picasso
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.launch
 import retrofit2.Response
 import java.lang.Exception
 import javax.inject.Inject
@@ -46,6 +52,26 @@ class AppRepository {
                 .resize(200, 200).get()
         }
     }
+
+    suspend fun getPlaceReviews(placeID: String, key: String): Flow<ArrayList<PlaceReview>?> =
+        flow {
+            Log.d(TAG, "getPlaceReviews() called ")
+            try {
+                val retrofitResponse: Response<PlaceReviewResult> = retrofit.getPlaceReviews(
+                    placeID,
+                    key
+                )
+                if (retrofitResponse.isSuccessful) {
+                    Log.d(
+                        TAG,
+                        "Reviews - ${retrofitResponse.body()} \n raw ${retrofitResponse.raw()}"
+                    )
+                    emit(retrofitResponse.body()?.result?.reviews)
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to get place Reviews -> ${e.localizedMessage}")
+            }
+        }
 
     suspend fun getNearbyPlaces(
         query: String?,
@@ -208,9 +234,9 @@ class AppRepository {
             }
     }
 
-    suspend fun getPlace(place: Place) = placesDao.getIfPlaceIsFavorite(place.place_id)
-    suspend fun getAllPlaces() = placesDao.getAllPlacesAsync()
-    suspend fun getAllPlacesByDistance() = placesDao.getAllPlacesByDistance()
+    suspend fun getPlaceLocally(place: Place) = placesDao.getIfPlaceIsFavorite(place.place_id)
+    suspend fun getAllPlacesLocally() = placesDao.getAllPlacesAsync()
+    suspend fun getAllPlacesByDistanceLocally() = placesDao.getAllPlacesByDistance()
     suspend fun deleteAllPlaces(userID: String) {
         Log.d(TAG, "deleteAllPlaces() called")
         firebaseDBRef.child("users").child(userID).child("favorite_places")
@@ -232,6 +258,26 @@ class AppRepository {
                     Log.d(TAG, "Successfully assigned token $token to user $userID")
                 } else {
                     Log.d(TAG, "Failed to assign token $token} to user $userID")
+                }
+            }
+    }
+
+    fun getUserFavoritePlaces(userID: String) {
+        Log.d(TAG, "getUserFavoritePlaces() called")
+        firebaseDBRef.child("users").child(userID).child("favorite_places").get()
+            .addOnCompleteListener {
+                if (it.isSuccessful) {
+                    Log.d(TAG, "User favorite places retrieved -> ${it.result.value}")
+                    val places = it.result.value as Map<*, *>?
+                    places?.values?.forEach { place ->
+                        val jsonPlace = Gson().toJson(place)
+                        Log.d(TAG, "place is $jsonPlace")
+                        CoroutineScope(Dispatchers.IO).launch {
+                            placesDao.insertPlace(Gson().fromJson(jsonPlace, Place::class.java))
+                        }
+                    }
+                } else {
+                    Log.d(TAG, "Failed to retrieve user favorite places")
                 }
             }
     }

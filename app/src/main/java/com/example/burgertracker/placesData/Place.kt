@@ -1,8 +1,6 @@
 package com.example.burgertracker.placesData
 
 
-import android.util.Log
-import androidx.lifecycle.MutableLiveData
 import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.Ignore
@@ -19,7 +17,7 @@ data class Place(
     var name: String,
     @Embedded
     var geometry: GeometryResult,
-    var formatted_address: String,
+    var vicinity: String,
     var rating: Double,
     var formatted_phone_number: String? = "",
     var imageString: String? = ""

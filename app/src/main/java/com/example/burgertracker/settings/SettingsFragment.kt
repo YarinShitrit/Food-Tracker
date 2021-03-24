@@ -6,6 +6,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.fragment.app.viewModels
 import androidx.preference.PreferenceFragmentCompat
+import androidx.preference.SeekBarPreference
 import androidx.preference.SwitchPreferenceCompat
 import com.example.burgertracker.R
 import com.example.burgertracker.dagger.Injector
@@ -32,7 +33,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Log.d(TAG,"onCreate() called")
+        Log.d(TAG, "onCreate() called")
         Injector.applicationComponent.inject(this)
     }
 
@@ -44,6 +45,11 @@ class SettingsFragment : PreferenceFragmentCompat() {
                 if ((it as SwitchPreferenceCompat).isChecked) {
                     linkFacebookAccount()
                 }
+                true
+            }
+        preferenceManager.findPreference<SeekBarPreference>("radius")
+            ?.setOnPreferenceChangeListener { _, newValue ->
+                mapViewModel.searchRadius.value = newValue as Int
                 true
             }
     }

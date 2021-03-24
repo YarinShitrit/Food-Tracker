@@ -5,6 +5,7 @@
         <SeekBarPreference
             android:max="50"
             app:key="radius"
+            app:defaultValue="10"
             app:min="0"
             app:showSeekBarValue="true"
             app:summary="Choose the radius for places around you in km" />

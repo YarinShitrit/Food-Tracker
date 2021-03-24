@@ -39,41 +39,6 @@
                 android:layout_gravity="center"
                 android:layout_marginTop="10dp"
                 android:fontFamily="@font/poppinsbold"
-                android:text="Sign in with phone number"
-                android:textSize="14sp" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:padding="4dp">
-
-                <EditText
-                    android:id="@+id/phone_number_editText"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:hint="Phone Number" />
-
-                <Button
-                    android:id="@+id/send_sms"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
-                    android:background="@drawable/rounded_corners"
-                    android:text="Send SMS"
-                    android:textAllCaps="false"
-                    android:textColor="@color/GoogleTextColor"
-                    android:textStyle="bold" />
-
-            </LinearLayout>
-
-            <com.google.android.material.textview.MaterialTextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:layout_marginTop="10dp"
-                android:fontFamily="@font/poppinsbold"
                 android:text="Social Sign in"
                 android:textSize="14sp" />
 
@@ -110,7 +75,6 @@
                 android:textAllCaps="false"
                 android:textColor="@color/GoogleTextColor"
                 android:textStyle="bold" />
-
 
         </LinearLayout>
     </androidx.cardview.widget.CardView>

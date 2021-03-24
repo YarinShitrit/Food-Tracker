@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.burgertracker.AppRepository
 import com.example.burgertracker.placesData.Place
+import com.example.burgertracker.placesData.PlaceReview
 import com.example.burgertracker.user.User
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.LatLng
@@ -20,7 +21,9 @@ import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 
 private const val TAG = "MapViewModel"
@@ -30,17 +33,18 @@ class MapViewModel(private val appRepository: AppRepository) : ViewModel() {
     var isMapAvailable = false // becomes true when onMapReady() is called
     val appMap = MutableLiveData<GoogleMap>()
     val currentUser = MutableLiveData<FirebaseUser?>()
-    private val currentUserID: String by lazy { currentUser.value!!.uid }
+    private lateinit var currentUserID: String
     val currentUserPhoto = MutableLiveData<Bitmap>()
     val currentFragment = MutableLiveData<String>()
     val currentFocusedPlace = MutableLiveData<Place>()
+    val currentFocusedPlaceReviews = MutableLiveData<ArrayList<PlaceReview>>()
     val placesList = MutableLiveData<ArrayList<Place>>()
     val mediatorPlace = MutableLiveData<Place>()
     val queryIcon = MutableLiveData<String>()
     val userLocation = MutableLiveData<LatLng>()
     val favPlaces = MutableLiveData<ArrayList<Place>>()
+    val searchRadius = MutableLiveData<Int>()
     private val fcmToken = MutableLiveData<String>()
-    private val searchRadius = 5
 
     init {
         placesList.value = arrayListOf()
@@ -114,7 +118,7 @@ class MapViewModel(private val appRepository: AppRepository) : ViewModel() {
                 "restaurant",
                 userLocation.value!!,
                 appKey,
-                searchRadius * 1000
+                (searchRadius.value ?: 10) * 1000
             ).collect {
                 setPlacesDistance(it)
                 MarkerIconGenerator.setPlacesMarkerIcon(it, queryIcon.value)
@@ -126,7 +130,7 @@ class MapViewModel(private val appRepository: AppRepository) : ViewModel() {
                     }
                 placesList.postValue(allPlaces)
                 delay(50)
-                Log.d(TAG, "Total places in placesList - ${placesList.value?.size}")
+                //Log.d(TAG, "Total places in placesList - ${placesList.value?.size}")
             }
         }
     }
@@ -134,7 +138,7 @@ class MapViewModel(private val appRepository: AppRepository) : ViewModel() {
     fun getAllPlacesByDistance() {
         Log.d(TAG, "getAllPlacesByDistance() called")
         viewModelScope.launch(Dispatchers.IO) {
-            val places = appRepository.getAllPlacesByDistance()
+            val places = appRepository.getAllPlacesByDistanceLocally()
             favPlaces.postValue(ArrayList(places))
         }
     }
@@ -151,7 +155,7 @@ class MapViewModel(private val appRepository: AppRepository) : ViewModel() {
         appRepository.deletePlaceFromFavorites(currentUserID, place.place_id)
     }
 
-    suspend fun getIfPlaceIsFavorite(place: Place) = appRepository.getPlace(place)
+    suspend fun getIfPlaceIsFavorite(place: Place) = appRepository.getPlaceLocally(place)
 
     fun deleteAllPlaces() {
         viewModelScope.launch(Dispatchers.IO) {
@@ -160,8 +164,14 @@ class MapViewModel(private val appRepository: AppRepository) : ViewModel() {
         }
     }
 
+    fun deleteAllPlacesLocally() {
+        viewModelScope.launch(Dispatchers.IO) {
+            appRepository.placesDao.deleteAllPlaces()
+        }
+    }
+
     private fun setPlacesDistance(place: Place) {
-        place.apply{
+        place.apply {
             val placeLocation = Location("destination")
                 .apply {
                     latitude = place.geometry.location.lat
@@ -183,9 +193,18 @@ class MapViewModel(private val appRepository: AppRepository) : ViewModel() {
 
     fun initUserData(user: FirebaseUser, fbToken: String? = null) {
         currentUser.value = user
+        currentUserID = currentUser.value!!.uid
+        getUserFavoritePlaces()
         downloadCurrentUserPhoto(fbToken)
         initUserFirebaseDBListener()
         initFirebaseCloudMessaging()
+    }
+
+    private fun getUserFavoritePlaces() {
+        Log.d(TAG, "getUserFavoritePlaces() called -> $currentUserID")
+        viewModelScope.launch(Dispatchers.IO) {
+            appRepository.getUserFavoritePlaces(currentUserID)
+        }
     }
 
     private fun downloadCurrentUserPhoto(fbToken: String? = null) {
@@ -206,7 +225,7 @@ class MapViewModel(private val appRepository: AppRepository) : ViewModel() {
     }
 
     fun createNewUser(fbToken: String? = null) {
-        Log.d(TAG,"createNewUser() called")
+        Log.d(TAG, "createNewUser() called")
         val firebaseUser = currentUser.value!!
         val user = User(firebaseUser.uid, firebaseUser.displayName, firebaseUser.email, fbToken)
         viewModelScope.launch(Dispatchers.IO) {
@@ -228,5 +247,15 @@ class MapViewModel(private val appRepository: AppRepository) : ViewModel() {
             currentUserID,
             currentFocusedPlace.value!!.place_id
         )
+    }
+
+    fun downloadDetailedPlaceReviews() {
+        Log.d(TAG, "downloadDetailedPlaceReviews() called")
+        viewModelScope.launch(Dispatchers.IO) {
+            appRepository.getPlaceReviews(currentFocusedPlace.value!!.place_id, appKey).collect {
+                Log.d(TAG, "Received Reviews - $it")
+                currentFocusedPlaceReviews.postValue(it)
+            }
+        }
     }
 }
