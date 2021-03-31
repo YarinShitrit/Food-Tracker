@@ -151,7 +151,7 @@ class MapViewModel(private val appRepository: AppRepository) : ViewModel() {
     fun removePlaceFromFavorites(place: Place) = viewModelScope.launch(Dispatchers.IO) {
         placesList.value?.find { (it.place_id == place.place_id) }
             .apply { this?.isLiked = false }
-        favPlaces.value?.remove(place)
+        //favPlaces.value?.remove(place)
         appRepository.deletePlaceFromFavorites(currentUserID, place.place_id)
     }
 

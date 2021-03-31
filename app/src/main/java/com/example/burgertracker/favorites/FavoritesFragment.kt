@@ -10,6 +10,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.viewModels
+import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.burgertracker.R
@@ -35,6 +36,7 @@ class FavoritesFragment : Fragment() {
         super.onCreate(savedInstanceState)
         Log.d(TAG, "onCreate() called")
         Injector.applicationComponent.inject(this)
+        mapViewModel.getAllPlacesByDistance()
     }
 
     override fun onCreateView(
@@ -61,27 +63,26 @@ class FavoritesFragment : Fragment() {
     }
 
     private fun initFavoritesRecyclerView() {
-        val adapter = FavListAdapter()
-        adapter.setDeleteClickListener(object : FavoriteItemClickListener {
-            override fun onClick(place: Place, position: Int) {
-                Log.d(TAG, "Favorite remove clicked - ${place.name}")
-                mapViewModel.removePlaceFromFavorites(place)
-                Toast.makeText(
-                    requireContext(),
-                    "Removed ${place.name} from favorites",
-                    Toast.LENGTH_SHORT
-                ).show()
-                adapter.deletePlace(position)
-            }
-        })
-        binding.favoritesRecyclerView.layoutManager =
-            LinearLayoutManager(requireContext(), RecyclerView.VERTICAL, false)
-        binding.favoritesRecyclerView.adapter = adapter
         mapViewModel.favPlaces.observe(requireActivity(), {
-            Log.d(TAG,"places added to list $it")
-            (binding.favoritesRecyclerView.adapter as FavListAdapter).setData(it)
+            Log.d(TAG, "places added to list $it")
+            val adapter = FavListAdapter(it)
+            adapter.setDeleteClickListener(object : FavoriteItemClickListener {
+                override fun onClick(place: Place, position: Int) {
+                    Log.d(TAG, "Favorite remove clicked - ${place.name}")
+                    mapViewModel.removePlaceFromFavorites(place)
+                    Toast.makeText(
+                        requireContext(),
+                        "Removed ${place.name} from favorites",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            })
+
+            binding.favoritesRecyclerView.layoutManager =
+                LinearLayoutManager(requireContext(), RecyclerView.VERTICAL, false)
+            binding.favoritesRecyclerView.adapter = adapter
+            (binding.favoritesRecyclerView.adapter as FavListAdapter).setData(mapViewModel.favPlaces.value)
         })
-        mapViewModel.getAllPlacesByDistance()
         binding.delAllButton.setOnClickListener {
             if (!mapViewModel.favPlaces.value.isNullOrEmpty()) {
                 Log.d(TAG, mapViewModel.favPlaces.value.toString())

@@ -2,8 +2,8 @@ package com.example.burgertracker.dagger
 
 import android.app.Application
 import com.example.burgertracker.AppRepository
-import com.example.burgertracker.db.PlaceDao
-import com.example.burgertracker.db.PlaceDatabase
+import com.example.burgertracker.room.PlaceDao
+import com.example.burgertracker.room.PlaceDatabase
 import dagger.Module
 import dagger.Provides
 import javax.inject.Singleton

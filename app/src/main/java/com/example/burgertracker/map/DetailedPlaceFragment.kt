@@ -111,10 +111,12 @@ class DetailedPlaceFragment : Fragment() {
                     binding.motionLayout.transitionToStart()
                 }
             }
+            withContext(Dispatchers.Main) {
+                initReviewsList()
+                setListeners()
+                initObservers()
+            }
         }
-        setListeners()
-        initObservers()
-        initReviewsList()
     }
 
     private fun initObservers() {

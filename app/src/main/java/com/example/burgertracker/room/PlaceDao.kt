@@ -1,4 +1,4 @@
-package com.example.burgertracker.db
+package com.example.burgertracker.room
 
 
 import androidx.room.*

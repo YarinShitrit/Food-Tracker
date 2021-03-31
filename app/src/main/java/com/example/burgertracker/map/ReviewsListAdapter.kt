@@ -13,14 +13,15 @@ class ReviewsListAdapter : RecyclerView.Adapter<ReviewsListAdapter.ReviewViewHol
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ReviewViewHolder {
         reviewBinding =
             ReviewListItemBinding.inflate(LayoutInflater.from(parent.context), parent, false)
-        return ReviewViewHolder(reviewBinding.root)
+        return ReviewViewHolder(reviewBinding)
     }
 
     override fun onBindViewHolder(holder: ReviewViewHolder, position: Int) {
-        reviewBinding.name.text = "Name: " + reviewsList!![position].author_name
-        reviewBinding.rating.text = "Rating: " + reviewsList!![position].rating.toString()
-        reviewBinding.timeDescription.text = reviewsList!![position].relative_time_description
-        reviewBinding.textReview.text = reviewsList!![position].text
+        holder.reviewBinding.name.text = "Name: " + reviewsList!![position].author_name
+        holder.reviewBinding.rating.text = "Rating: " + reviewsList!![position].rating.toString()
+        holder.reviewBinding.timeDescription.text =
+            reviewsList!![position].relative_time_description
+        holder.reviewBinding.textReview.text = reviewsList!![position].text
     }
 
     override fun getItemCount(): Int {
@@ -35,5 +36,6 @@ class ReviewsListAdapter : RecyclerView.Adapter<ReviewsListAdapter.ReviewViewHol
         notifyDataSetChanged()
     }
 
-    class ReviewViewHolder(view: View) : RecyclerView.ViewHolder(view)
+    class ReviewViewHolder(val reviewBinding: ReviewListItemBinding) :
+        RecyclerView.ViewHolder(reviewBinding.root)
 }

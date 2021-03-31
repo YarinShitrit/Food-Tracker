@@ -17,8 +17,8 @@ data class Place(
     var name: String,
     @Embedded
     var geometry: GeometryResult,
-    var vicinity: String,
-    var rating: Double,
+    var vicinity: String?,
+    var rating: Double?,
     var formatted_phone_number: String? = "",
     var imageString: String? = ""
 ) : Serializable {

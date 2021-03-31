@@ -11,9 +11,14 @@
         android:name=".AppUtils"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
+        android:allowBackup="false"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+
+        <meta-data
+            android:name="firebase_performance_logcat_enabled"
+            android:value="true" />
 
         <meta-data
             android:name="firebase_messaging_auto_init_enabled"
@@ -50,6 +55,7 @@
                 <action android:name="android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS" />
             </intent-filter>
         </activity>
+
         <service
             android:name=".firebase.MyFirebaseMessagingService"
             android:exported="false">

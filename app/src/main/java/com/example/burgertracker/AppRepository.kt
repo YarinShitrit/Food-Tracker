@@ -3,7 +3,7 @@ package com.example.burgertracker
 import android.graphics.Bitmap
 import android.util.Log
 import com.example.burgertracker.dagger.Injector
-import com.example.burgertracker.db.PlaceDao
+import com.example.burgertracker.room.PlaceDao
 import com.example.burgertracker.placesData.Place
 import com.example.burgertracker.placesData.PlaceResult
 import com.example.burgertracker.placesData.PlaceReview
@@ -117,7 +117,7 @@ class AppRepository {
             }
         } catch (e: Exception) {
             Log.e(TAG, "failed to get places, ${e.localizedMessage}")
-            Log.e(TAG, "${e.printStackTrace()}")
+            Log.e(TAG, "${e.stackTrace}")
         }
     }
 
