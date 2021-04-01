@@ -49,7 +49,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
             }
         preferenceManager.findPreference<SeekBarPreference>("radius")
             ?.setOnPreferenceChangeListener { _, newValue ->
-                mapViewModel.searchRadius.value = newValue as Int
+                preferenceManager.sharedPreferences.edit().putInt("radius", newValue as Int).apply()
                 true
             }
     }

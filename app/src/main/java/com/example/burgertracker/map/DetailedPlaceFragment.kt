@@ -99,8 +99,10 @@ class DetailedPlaceFragment : Fragment() {
         binding.placeName.text = place.name
         binding.placeAddress.text = place.vicinity
         binding.placeDistance.text = "Distance: ${place.distance}km"
-        binding.placeRating.text = "Rating: ${place.rating}"
+        binding.placeRating.text = if (place.rating != null) "Rating: ${place.rating}" else "Rating: None"
         binding.placeFavorites.text = "${place.totalFavorites} people added it to favorites"
+        setListeners()
+        initObservers()
         ioSCOPE.launch {
             if (mapViewModel.getIfPlaceIsFavorite(place) != null) {
                 withContext(Dispatchers.Main) {
@@ -111,12 +113,11 @@ class DetailedPlaceFragment : Fragment() {
                     binding.motionLayout.transitionToStart()
                 }
             }
-            withContext(Dispatchers.Main) {
-                initReviewsList()
-                setListeners()
-                initObservers()
-            }
         }
+            initReviewsList()
+
+
+
     }
 
     private fun initObservers() {

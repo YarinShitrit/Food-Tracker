@@ -1,8 +1,12 @@
 package com.example.burgertracker
 
+import android.annotation.SuppressLint
 import android.app.Application
 import android.content.Context
 import android.location.Location
+import androidx.preference.Preference
+import androidx.preference.PreferenceDataStore
+import androidx.preference.PreferenceManager
 import com.example.burgertracker.dagger.Injector
 import com.example.burgertracker.dagger.NetworkModule
 import com.example.burgertracker.dagger.PlacesModule
@@ -14,6 +18,7 @@ import com.example.burgertracker.map.MapFragment
 import com.example.burgertracker.settings.SettingsFragment
 import com.google.android.gms.maps.model.LatLng
 import dagger.Component
+import java.util.prefs.Preferences
 import javax.inject.Singleton
 
 @Singleton
@@ -44,7 +49,6 @@ class AppUtils : Application() {
         val scale = context.resources.displayMetrics.density
         return (dp * scale + 0.5f).toInt()
     }
-
 }
 
 /**

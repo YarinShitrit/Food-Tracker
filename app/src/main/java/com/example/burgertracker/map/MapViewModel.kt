@@ -21,9 +21,7 @@ import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 
 private const val TAG = "MapViewModel"
@@ -43,7 +41,6 @@ class MapViewModel(private val appRepository: AppRepository) : ViewModel() {
     val queryIcon = MutableLiveData<String>()
     val userLocation = MutableLiveData<LatLng>()
     val favPlaces = MutableLiveData<ArrayList<Place>>()
-    val searchRadius = MutableLiveData<Int>()
     private val fcmToken = MutableLiveData<String>()
 
     init {
@@ -110,7 +107,7 @@ class MapViewModel(private val appRepository: AppRepository) : ViewModel() {
      *Creates a Retrofit call to Google Places API to retrieve JSON data about nearby places
      *@param query String?- the query entered for specific type of nearby places or null for getting all types nearby places
      */
-    fun getNearbyPlaces(query: String?) {
+    fun getNearbyPlaces(query: String?, searchRadius : Int) {
         Log.d(TAG, "getNearbyPlaces called")
         viewModelScope.launch(Dispatchers.IO) {
             appRepository.getNearbyPlaces(
@@ -118,7 +115,7 @@ class MapViewModel(private val appRepository: AppRepository) : ViewModel() {
                 "restaurant",
                 userLocation.value!!,
                 appKey,
-                (searchRadius.value ?: 10) * 1000
+                searchRadius * 1000
             ).collect {
                 setPlacesDistance(it)
                 MarkerIconGenerator.setPlacesMarkerIcon(it, queryIcon.value)

@@ -26,6 +26,7 @@ import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.FragmentNavigatorExtras
 import androidx.navigation.fragment.findNavController
+import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.burgertracker.AppUtils
@@ -48,6 +49,7 @@ import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.*
 import javax.inject.Inject
+import kotlin.properties.Delegates
 
 
 private const val TAG = "MapFragment"
@@ -73,6 +75,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     private lateinit var infoWindow: PlaceInfoWindow
     private var gpsSnackBar: Snackbar? = null
     private var locationFlag = false
+    private var searchRadius by Delegates.notNull<Int>()
 
     override fun onCreate(p0: Bundle?) {
         super.onCreate(p0)
@@ -98,6 +101,8 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         super.onViewCreated(view, savedInstanceState)
         Log.d(TAG, "onViewCreated() called")
         mapViewModel.currentFragment.value = this::class.java.name
+        searchRadius =
+            PreferenceManager.getDefaultSharedPreferences(requireContext()).getInt("radius", 10)
         /**checks if
          * no permissions were granted even after requestPermissions() was called from onMapReady() so the user
          * denied the permissionsRequest and now need to display snackBar
@@ -118,6 +123,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         Log.d(TAG, "onStart() called")
     }
 
+    @SuppressLint("RestrictedApi")
     @RequiresApi(Build.VERSION_CODES.M)
     override fun onResume() {
         super.onResume()
@@ -125,10 +131,11 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         if (checkPermissions()) {
             getCurrentLocation(requireActivity())
             if (mapViewModel.appMap.value != null) {
-                Log.d(TAG, "1")
                 updateUI()
                 if (!mapViewModel.placesList.value.isNullOrEmpty()) {
-                    mapViewModel.placesList.value!!.forEach { displayPlaces(it) }
+                    mapViewModel.placesList.value!!.forEach {
+                        Log.d(TAG,"Calling displayPlaces from onResume with $it")
+                        displayPlaces(it) }
                 }
             }
         } else if (permissionsResultFlag) {
@@ -149,8 +156,6 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         } else {
             //Permissions Granted
             updateUI()
-            //Log.d(TAG,"2")
-            //getCurrentLocation(requireActivity())
             if (!mapViewModel.placesList.value.isNullOrEmpty()) {
                 mapViewModel.placesList.value!!.forEach { displayPlaces(it) }
             }
@@ -421,10 +426,10 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                 mapViewModel.appMap.value!!.clear()
                 if (adapter.itemClicked == "All") {
                     mapViewModel.queryIcon.value = null
-                    mapViewModel.getNearbyPlaces(null)
+                    mapViewModel.getNearbyPlaces(null, searchRadius)
                 } else {
                     mapViewModel.queryIcon.value = adapter.itemClicked
-                    mapViewModel.getNearbyPlaces(adapter.itemClicked)
+                    mapViewModel.getNearbyPlaces(adapter.itemClicked, searchRadius)
                 }
             }
         })
@@ -438,9 +443,8 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                 Log.d(TAG, " calling getNearbyPlaces from query")
                 mapViewModel.placesList.value?.clear()
                 mapViewModel.appMap.value!!.clear()
-                mapViewModel.getNearbyPlaces(query)
-                //clearFocus() closes the keyboard after performing the search
-                binding.mapSearch.clearFocus()
+                mapViewModel.getNearbyPlaces(query, searchRadius)
+                binding.mapSearch.clearFocus() //closes the keyboard after performing the search
                 return true
             }
 
@@ -472,7 +476,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                 locationFlag = true
                 if (mapViewModel.placesList.value.isNullOrEmpty()) {
                     Log.d(TAG, "calling getNearbyPlaces() from placesList observer")
-                    mapViewModel.getNearbyPlaces(null)
+                    mapViewModel.getNearbyPlaces(null, searchRadius)
                 }
             }
         })
@@ -503,7 +507,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     }
 
     private fun initMarkersOnClick() {
-        Log.d(TAG, "enableMarkersOnClick called")
+        Log.d(TAG, "initMarkersOnClick() called")
         mapViewModel.appMap.value?.setOnMarkerClickListener {
             val currentFocusedPlace = mapViewModel.placesList.value?.find { place ->
                 LatLng(place.geometry.location.lat, place.geometry.location.lng) == it.position
@@ -570,7 +574,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     }
 
     private fun showPermissionsSnackBar() {
-        Log.d(TAG, "showPermissionsSnackBar called")
+        Log.d(TAG, "showPermissionsSnackBar() called")
         Snackbar.make(
             binding.mapWrapperLayout,
             "Please Enable Location Permission",
