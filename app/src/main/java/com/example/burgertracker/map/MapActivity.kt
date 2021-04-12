@@ -50,41 +50,6 @@ class MapActivity : AppCompatActivity() {
         initDrawerAndNavigation()
     }
 
-    override fun onStart() {
-        Log.d(TAG, "onStart() called")
-        super.onStart()
-    }
-
-    override fun onResume() {
-        Log.d(TAG, "onResume() called")
-        super.onResume()
-    }
-
-    override fun onPause() {
-        Log.d(TAG, "onPause() called")
-        super.onPause()
-    }
-
-    override fun onStop() {
-        Log.d(TAG, "onStop() called")
-        super.onStop()
-    }
-
-    override fun onPostCreate(savedInstanceState: Bundle?) {
-        Log.d(TAG, "onPostCreate() called")
-        super.onPostCreate(savedInstanceState)
-    }
-
-    override fun onDestroy() {
-        Log.d(TAG, "onDestroy() called")
-        super.onDestroy()
-    }
-
-    override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
-        Log.d(TAG, "onPrepareOptionsMenu() called")
-        return super.onPrepareOptionsMenu(menu)
-    }
-
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         Log.d(TAG, "onCreateOptionsMenu() called")
         //binding.toolbar.inflateMenu(R.menu.toolbar_menu)
@@ -106,6 +71,7 @@ class MapActivity : AppCompatActivity() {
      * Initializes the DrawerLayout and side navigation
      */
     private fun initDrawerAndNavigation() {
+        setToggle()
         binding.logout.setOnClickListener {
             mapViewModel.appMap.value?.clear()
             mapViewModel.placesList.value?.clear()

@@ -29,4 +29,6 @@
     <string name="facebook_login_duplicate_error">You already have an account associated with this email using Google, please login using Google and then link your Facebook account for further login</string>
     <string name="google_login_duplicate_error">You already have an account associated with this email using Facebook, please login using Google and then link your Google account for further login</string>
     <string name="button_to_add_remove_place_from_favorites">Button to add/remove place from favorites</string>
+    <string name="content_desc_drawer_open">open</string>
+    <string name="content_desc_drawer_close">close</string>
 </resources>

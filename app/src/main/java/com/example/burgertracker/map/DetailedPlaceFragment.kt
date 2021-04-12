@@ -99,7 +99,8 @@ class DetailedPlaceFragment : Fragment() {
         binding.placeName.text = place.name
         binding.placeAddress.text = place.vicinity
         binding.placeDistance.text = "Distance: ${place.distance}km"
-        binding.placeRating.text = if (place.rating != null) "Rating: ${place.rating}" else "Rating: None"
+        binding.placeRating.text =
+            if (place.rating != null) "Rating: ${place.rating}" else "Rating: None"
         binding.placeFavorites.text = "${place.totalFavorites} people added it to favorites"
         setListeners()
         initObservers()
@@ -114,10 +115,7 @@ class DetailedPlaceFragment : Fragment() {
                 }
             }
         }
-            initReviewsList()
-
-
-
+        initReviewsList()
     }
 
     private fun initObservers() {
