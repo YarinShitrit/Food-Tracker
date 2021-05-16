@@ -24,9 +24,7 @@
 
     </style>
 
-    <style name="BottomNavigation" parent="Widget.MaterialComponents.BottomNavigationView.Colored">
+    <style name="BottomNavigation" parent="Widget.MaterialComponents.BottomNavigationView.Colored"></style>
 
-
-    </style>
 
 </resources>

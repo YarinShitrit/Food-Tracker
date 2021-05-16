@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "806291373663",
+    "firebase_url": "https://burgertracker-default-rtdb.firebaseio.com",
     "project_id": "burgertracker",
     "storage_bucket": "burgertracker.appspot.com"
   },
@@ -14,8 +15,12 @@
       },
       "oauth_client": [
         {
-          "client_id": "806291373663-6qlfvdvitbe76o8tgav72m8mijnkur5s.apps.googleusercontent.com",
-          "client_type": 3
+          "client_id": "806291373663-97iacv2d77as4ta8l86jbtholffndsbs.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.burgertracker",
+            "certificate_hash": "c22e7f8c7442a9115d98c867cb465a61e52863b2"
+          }
         }
       ],
       "api_key": [
@@ -27,7 +32,7 @@
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "806291373663-6qlfvdvitbe76o8tgav72m8mijnkur5s.apps.googleusercontent.com",
+              "client_id": "806291373663-bq1rgth6pte9td1g6rct94ngb3nfrq2t.apps.googleusercontent.com",
               "client_type": 3
             }
           ]

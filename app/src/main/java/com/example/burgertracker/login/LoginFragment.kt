@@ -93,6 +93,7 @@ class LoginFragment : Fragment() {
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        Log.d(TAG, "onActivityResult() called")
         super.onActivityResult(requestCode, resultCode, data)
         callbackManager.onActivityResult(requestCode, resultCode, data)
         if (requestCode == GOOGLE_SIGN_IN) {
@@ -105,6 +106,11 @@ class LoginFragment : Fragment() {
             } catch (e: ApiException) {
                 // Google Sign In failed, update UI appropriately
                 Log.e(TAG, "Google sign in failed", e)
+                Toast.makeText(
+                    requireContext(),
+                    "Failed to login, Please Try again",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         }
     }
@@ -115,13 +121,19 @@ class LoginFragment : Fragment() {
     }
 
     private fun signInWithGoogle() {
+        Log.d(TAG, "signInWithGoogle() called")
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestIdToken(getString(R.string.default_web_client_id))
+            .requestIdToken(getString(R.string.client_id))
             .requestEmail()
             .build()
+        Log.d(TAG, getString(R.string.default_web_client_id))
         val mGoogleSignInClient = GoogleSignIn.getClient(requireActivity(), gso)
         val signInIntent = mGoogleSignInClient.signInIntent
-        startActivityForResult(signInIntent, GOOGLE_SIGN_IN)
+        try {
+            startActivityForResult(signInIntent, GOOGLE_SIGN_IN)
+        } catch (e: ApiException) {
+            Log.d(TAG, "Failed to login - exception is ${e.localizedMessage}")
+        }
     }
 
     private fun firebaseAuthWithGoogle(idToken: String) {
@@ -161,6 +173,7 @@ class LoginFragment : Fragment() {
     }
 
     private fun setUpFacebookLogin() {
+        Log.d(TAG, "setUpFacebookLogin() called")
         LoginManager.getInstance().registerCallback(callbackManager,
             object : FacebookCallback<LoginResult?> {
                 override fun onSuccess(loginResult: LoginResult?) {
@@ -223,64 +236,8 @@ class LoginFragment : Fragment() {
             }
     }
 
-  /*  private fun signInWithPhone(credential: PhoneAuthCredential) {
-        auth.signInWithCredential(credential)
-            .addOnCompleteListener(requireActivity()) { task ->
-                if (task.isSuccessful) {
-                    // Sign in success, update UI with the signed-in user's information
-                    Log.d(TAG, "signInWithCredential:success")
-                    val user = task.result.user
-                    if (user != null) {
-                        initUserData(user)
-                        findNavController().navigate(R.id.action_loginFragment_to_mapsFragment)
-                    } else {
-                        // Sign in failed, display a message and update the UI
-                        Log.w(TAG, "signInWithCredential:failure", task.exception)
-                        if (task.exception is FirebaseAuthInvalidCredentialsException) {
-                            Log.e(TAG, "Verification code invalid")
-                        }
-                    }
-                }
-            }
-    }*/
-
-   /* private fun setPhoneAuth() {
-        auth.setLanguageCode("en")
-        binding.sendSms.setOnClickListener {
-            val options = PhoneAuthOptions.newBuilder(auth)
-                .setPhoneNumber(binding.phoneNumberEditText.text.toString()) // Phone number to verify
-                .setTimeout(60L, TimeUnit.SECONDS) // Timeout and unit
-                .setActivity(requireActivity()) // Activity (for callback binding)
-                .setCallbacks(object : PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
-
-                    override fun onVerificationCompleted(p0: PhoneAuthCredential) {
-                        Log.d(TAG, "Verification completed ")
-                        signInWithPhone(p0)
-                    }
-
-                    override fun onVerificationFailed(p0: FirebaseException) {
-                        Log.e(TAG, "Verification failed -> ${p0.localizedMessage}")
-                    }
-
-                    override fun onCodeSent(
-                        p0: String,
-                        p1: PhoneAuthProvider.ForceResendingToken
-                    ) {
-                        super.onCodeSent(p0, p1)
-                        Log.d(TAG, "Verification code sent")
-                    }
-
-                    override fun onCodeAutoRetrievalTimeOut(p0: String) {
-                        super.onCodeAutoRetrievalTimeOut(p0)
-                        Log.d(TAG, "Verification code timeout")
-                    }
-                }) // OnVerificationStateChangedCallbacks
-                .build()
-            PhoneAuthProvider.verifyPhoneNumber(options)
-        }
-    }*/
-
     private fun initUserData(user: FirebaseUser, fbToken: String? = null) {
+        Log.d(TAG, "initUserData() called")
         mapViewModel.initUserData(user, fbToken)
     }
 }

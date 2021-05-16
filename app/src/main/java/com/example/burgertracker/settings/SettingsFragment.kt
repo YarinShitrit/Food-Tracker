@@ -44,6 +44,8 @@ class SettingsFragment : PreferenceFragmentCompat() {
             ?.setOnPreferenceClickListener {
                 if ((it as SwitchPreferenceCompat).isChecked) {
                     linkFacebookAccount()
+                } else {
+                    removeFacebookLinking()
                 }
                 true
             }
@@ -57,7 +59,6 @@ class SettingsFragment : PreferenceFragmentCompat() {
     override fun onResume() {
         super.onResume()
         mapViewModel.currentFragment.value = this::class.java.name
-
     }
 
     private fun linkFacebookAccount() {
@@ -78,7 +79,8 @@ class SettingsFragment : PreferenceFragmentCompat() {
                                         "Facebook Account Linked",
                                         Toast.LENGTH_SHORT
                                     ).show()
-
+                                    preferenceManager.sharedPreferences.edit()
+                                        .putBoolean("fbLinking", true).apply()
                                 } else {
                                     Log.w(TAG, "linkWithCredential:failure", task.exception)
                                 }
@@ -100,6 +102,17 @@ class SettingsFragment : PreferenceFragmentCompat() {
             this,
             listOf("public_profile", "email", "user_friends")
         )
+    }
+
+    private fun removeFacebookLinking() {
+        auth.currentUser!!.unlink(FacebookAuthProvider.PROVIDER_ID)
+        preferenceManager.sharedPreferences.edit()
+            .putBoolean("fbLinking", false).apply()
+        Toast.makeText(
+            requireContext(),
+            "Facebook Account Removed",
+            Toast.LENGTH_SHORT
+        ).show()
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {

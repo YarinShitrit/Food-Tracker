@@ -10,6 +10,7 @@
     <string name="drawer_close">draw close</string>
     <string name="title_activity_settings">Settings</string>
     <string name="facebook_app_id">234639304845154</string>
+    <string name="client_id" translatable="false">806291373663-bq1rgth6pte9td1g6rct94ngb3nfrq2t.apps.googleusercontent.com</string>
     <string name="fb_login_protocol_scheme">fb234639304845154</string>
 
     <!-- Preference Titles -->

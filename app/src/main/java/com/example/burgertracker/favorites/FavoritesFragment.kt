@@ -53,6 +53,7 @@ class FavoritesFragment : Fragment() {
         Log.d(TAG, "onViewCreated() called")
         mapViewModel.currentFragment.value = this::class.java.name
         initFavoritesRecyclerView()
+        initListeners()
     }
 
     override fun onDestroyView() {
@@ -60,6 +61,39 @@ class FavoritesFragment : Fragment() {
         Log.d(TAG, "onDestroyView() called")
         _binding = null
         mapViewModel.favPlaces.removeObservers(requireActivity())
+    }
+
+    private fun initListeners() {
+        binding.delAllButton.setOnClickListener {
+            if (!mapViewModel.favPlaces.value.isNullOrEmpty()) {
+                Log.d(TAG, mapViewModel.favPlaces.value.toString())
+                val alertDialog = AlertDialog.Builder(requireContext())
+                    .setTitle("Delete all favorites?").setIcon(
+                        ResourcesCompat.getDrawable(
+                            resources,
+                            R.drawable.ic_baseline_delete_24,
+                            null
+                        )
+                    )
+                    .setPositiveButton(
+                        "Delete"
+                    ) { _, _ ->
+                        mapViewModel.deleteAllPlaces()
+                    }
+                    .setNegativeButton("Cancel") { dialog, _ -> dialog.cancel() }
+                    .create()
+                alertDialog.show()
+                alertDialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(
+                    ResourcesCompat.getColor(resources, R.color.colorPrimary, null)
+                )
+                alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(
+                    ResourcesCompat.getColor(resources, R.color.buttonColor, null)
+                )
+
+            } else {
+                Toast.makeText(requireContext(), "List is empty", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     private fun initFavoritesRecyclerView() {
@@ -83,27 +117,6 @@ class FavoritesFragment : Fragment() {
             binding.favoritesRecyclerView.adapter = adapter
             (binding.favoritesRecyclerView.adapter as FavListAdapter).setData(mapViewModel.favPlaces.value)
         })
-        binding.delAllButton.setOnClickListener {
-            if (!mapViewModel.favPlaces.value.isNullOrEmpty()) {
-                Log.d(TAG, mapViewModel.favPlaces.value.toString())
-                AlertDialog.Builder(requireContext())
-                    .setTitle("Delete all favorites?").setIcon(
-                        ResourcesCompat.getDrawable(
-                            resources,
-                            R.drawable.ic_baseline_delete_24,
-                            null
-                        )
-                    )
-                    .setPositiveButton(
-                        "Delete"
-                    ) { _, _ ->
-                        mapViewModel.deleteAllPlaces()
-                    }
-                    .setNegativeButton("Cancel") { dialog, _ -> dialog.cancel() }
-                    .show()
-            } else {
-                Toast.makeText(requireContext(), "List is empty", Toast.LENGTH_SHORT).show()
-            }
-        }
+
     }
 }
