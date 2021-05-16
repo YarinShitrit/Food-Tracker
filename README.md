@@ -2,6 +2,7 @@
 
 Map based app to view and add to favorites nearby restaurants categorized by food type, distance, etc.
 -Written in 100% Kotlin and Firebase services or backend management using:
+
    *Authentication, Realtime DB, Crashlytics, Firebase Cloud Messaging.
    *Node.js based cloud functions
 -App is built around the MVVM architecture
