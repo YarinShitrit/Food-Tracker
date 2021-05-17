@@ -16,6 +16,7 @@ private const val TAG = "FavListAdapter"
 class FavListAdapter(var placesList: ArrayList<Place>) :
     RecyclerView.Adapter<FavListAdapter.FavoriteViewHolder>() {
     private lateinit var binding: FavListItemBinding
+    private lateinit var delClickListener: FavoriteItemClickListener
     private lateinit var favClickListener: FavoriteItemClickListener
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FavoriteViewHolder {
         binding = FavListItemBinding.inflate(LayoutInflater.from(parent.context), parent, false)
@@ -24,12 +25,16 @@ class FavListAdapter(var placesList: ArrayList<Place>) :
 
     override fun onBindViewHolder(holder: FavoriteViewHolder, position: Int) {
         holder.binding.placeName.text = placesList.get(holder.adapterPosition).name
-        holder.binding.placeDistance.text = "Distance: ${placesList[holder.adapterPosition].distance}km"
+        holder.binding.placeDistance.text =
+            "Distance: ${placesList[holder.adapterPosition].distance}km"
+        holder.binding.root.setOnClickListener {
+            favClickListener.onClick(placesList[holder.adapterPosition], holder.adapterPosition)
+        }
         holder.binding.delButton.setOnClickListener {
             placesList.forEach { Log.d(TAG, "${placesList.indexOf(it)} -> ${it.name} \n") }
             Log.d(TAG, "POSITION IS $position")
             Log.d(TAG, "holder position is ${holder.adapterPosition}")
-            favClickListener.onClick(placesList[holder.adapterPosition], holder.adapterPosition)
+            delClickListener.onClick(placesList[holder.adapterPosition], holder.adapterPosition)
             placesList.removeAt(holder.adapterPosition)
             notifyItemRemoved(holder.adapterPosition)
         }
@@ -44,6 +49,10 @@ class FavListAdapter(var placesList: ArrayList<Place>) :
     }
 
     fun setDeleteClickListener(listener: FavoriteItemClickListener) {
+        delClickListener = listener
+    }
+
+    fun setPlaceClickListener(listener: FavoriteItemClickListener) {
         favClickListener = listener
     }
 
