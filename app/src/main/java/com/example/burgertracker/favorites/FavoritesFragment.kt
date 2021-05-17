@@ -10,7 +10,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.viewModels
-import androidx.recyclerview.widget.GridLayoutManager
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.burgertracker.R
@@ -100,6 +100,18 @@ class FavoritesFragment : Fragment() {
         mapViewModel.favPlaces.observe(requireActivity(), {
             Log.d(TAG, "places added to list $it")
             val adapter = FavListAdapter(it)
+            adapter.setPlaceClickListener(object : FavoriteItemClickListener {
+                override fun onClick(place: Place, position: Int) {
+                    Log.d(TAG, "Favorite clicked - ${place.name}")
+                    mapViewModel.currentFocusedPlace.value = place
+                    findNavController().navigate(
+                        R.id.action_to_detailedFragment,
+                        null,
+                        null,
+                        null
+                    )
+                }
+            })
             adapter.setDeleteClickListener(object : FavoriteItemClickListener {
                 override fun onClick(place: Place, position: Int) {
                     Log.d(TAG, "Favorite remove clicked - ${place.name}")
@@ -111,6 +123,7 @@ class FavoritesFragment : Fragment() {
                     ).show()
                 }
             })
+
 
             binding.favoritesRecyclerView.layoutManager =
                 LinearLayoutManager(requireContext(), RecyclerView.VERTICAL, false)

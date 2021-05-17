@@ -134,8 +134,9 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                 updateUI()
                 if (!mapViewModel.placesList.value.isNullOrEmpty()) {
                     mapViewModel.placesList.value!!.forEach {
-                        Log.d(TAG,"Calling displayPlaces from onResume with $it")
-                        displayPlaces(it) }
+                        Log.d(TAG, "Calling displayPlaces from onResume with $it")
+                        displayPlaces(it)
+                    }
                 }
             }
         } else if (permissionsResultFlag) {
@@ -239,15 +240,11 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             object : OnInfoWindowElemTouchListener(infoWindowBinding.infoButton) {
                 override fun onClickConfirmed(v: View?, marker: Marker?) {
                     Log.d(TAG, "info button Clicked")
-                    val extras = FragmentNavigatorExtras(
-                        infoWindowBinding.placeName to "place_transition"
-                    )
-                    mapViewModel
                     findNavController().navigate(
                         R.id.action_mapFragment_to_detailedFragment,
                         null,
                         null,
-                        extras
+                        null
                     )
                 }
             }
